@@ -94,12 +94,12 @@ To deploy the stack correctly without circular dependencies, follow this step-by
 3. Configure the required environment variables.
 4. Configure CORS to accept temporary origins:
    * **Set `CORS_ALLOWED_ORIGINS` to**: `http://localhost:3000, https://*.vercel.app` (permits local testing and Vercel preview hostings).
-5. Once the Web Service is active, copy the assigned public Render service URL (e.g., `https://your-api.onrender.com`).
+5. Once the Web Service is active, verify it is running on your Render URL: `https://cost-intelligence-api.onrender.com`.
 
 ### Step 2: Deploy the Frontend on Vercel
 1. Set up a Next.js project on Vercel importing your monorepo.
 2. In the project settings, configure the environment variables:
-   * Set `NEXT_PUBLIC_API_BASE` to your deployed Render API URL (e.g., `https://your-api.onrender.com/api/v1`).
+   * Set `NEXT_PUBLIC_API_BASE` to your deployed Render API URL: `https://cost-intelligence-api.onrender.com/api/v1`.
    * Complete the Auth0 parameters.
 3. Deploy the frontend. Once active, copy the production frontend domain (e.g., `https://your-app.vercel.app`).
 
