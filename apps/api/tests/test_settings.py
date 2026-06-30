@@ -49,3 +49,11 @@ def test_is_production_true_for_prod():
 def test_secrets_provider_redis():
     s = Settings(**_BASE, secrets_provider="redis")
     assert s.secrets_provider == "redis"
+
+
+def test_database_url_coercion():
+    base = _BASE.copy()
+    base["database_url"] = "postgresql://cost_intel_db_user:pwd@host/db"
+    s = Settings(**base)
+    assert str(s.database_url) == "postgresql+asyncpg://cost_intel_db_user:pwd@host/db"
+    assert s.database_url_sync == "postgresql+psycopg://cost_intel_db_user:pwd@host/db"

@@ -161,6 +161,18 @@ class Settings(BaseSettings):
     otel_exporter_otlp_endpoint: str | None = None
     otel_service_name: str = "terzo-api"
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _coerce_database_url(cls, v):
+        if not v:
+            return v
+        s = str(v)
+        if s.startswith("postgresql://"):
+            s = s.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif s.startswith("postgres://"):
+            s = s.replace("postgres://", "postgresql+asyncpg://", 1)
+        return s
+
     @field_validator("auth0_issuer", mode="before")
     @classmethod
     def _default_issuer(cls, v, info):
@@ -176,7 +188,14 @@ class Settings(BaseSettings):
     @property
     def database_url_sync(self) -> str:
         """Synchronous DSN for Alembic (asyncpg → psycopg)."""
-        return str(self.database_url).replace("+asyncpg", "+psycopg")
+        s = str(self.database_url)
+        if "+asyncpg" in s:
+            return s.replace("+asyncpg", "+psycopg")
+        elif s.startswith("postgresql://"):
+            return s.replace("postgresql://", "postgresql+psycopg://", 1)
+        elif s.startswith("postgres://"):
+            return s.replace("postgres://", "postgresql+psycopg://", 1)
+        return s
 
 
 @lru_cache
