@@ -1,0 +1,6 @@
+pnpm-workspace.yaml
+pnpm-lock.yaml
+apps/api/
+migrations/
+packages/
+.git/

@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --legacy-peer-deps --prefix apps/web",
+  "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build --prefix apps/web",
   "outputDirectory": "apps/web/.next"
 }
