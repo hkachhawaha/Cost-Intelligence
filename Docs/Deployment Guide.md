@@ -51,7 +51,7 @@ graph TB
 * **Required Environment Variables**:
   * `NEXT_PUBLIC_API_BASE`: URL of your Render FastAPI deployment (e.g., `https://cost-intelligence-api.onrender.com/api/v1`).
   * `AUTH0_SECRET`: Random 32-byte hex string.
-  * `AUTH0_BASE_URL`: Vercel app domain (e.g., `https://your-app.vercel.app`).
+  * `AUTH0_BASE_URL`: Vercel app domain (e.g., `https://web-ten-lime-73.vercel.app`).
   * `AUTH0_ISSUER_BASE_URL`: Your Auth0 domain (e.g., `https://tenant.us.auth0.com`).
   * `AUTH0_CLIENT_ID`: Auth0 Web Client ID.
   * `AUTH0_CLIENT_SECRET`: Auth0 Web Client Secret.
@@ -80,7 +80,7 @@ To operate within Render's Free tier limits, both the API and the background wor
   * `AUTH0_DOMAIN`: Auth0 domain.
   * `AUTH0_AUDIENCE`: Auth0 Client Audience ID.
   * `GEMINI_API_KEY`: Google Gemini Developer API key.
-  * `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins (e.g. `http://localhost:3000, https://your-app.vercel.app`).
+  * `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins (e.g. `http://localhost:3000, https://web-ten-lime-73.vercel.app`).
 
 ---
 
@@ -101,12 +101,12 @@ To deploy the stack correctly without circular dependencies, follow this step-by
 2. In the project settings, configure the environment variables:
    * Set `NEXT_PUBLIC_API_BASE` to your deployed Render API URL: `https://cost-intelligence-api.onrender.com/api/v1`.
    * Complete the Auth0 parameters.
-3. Deploy the frontend. Once active, copy the production frontend domain (e.g., `https://your-app.vercel.app`).
+3. Deploy the frontend. Once active, copy the production frontend domain (e.g., `https://web-ten-lime-73.vercel.app`).
 
 ### Step 3: Lockdown & Finalize Security
 1. Return to your **Render** dashboard for the FastAPI backend.
 2. Update the `CORS_ALLOWED_ORIGINS` environment variable to lock it down exclusively to your production Vercel frontend domain:
-   * **Set `CORS_ALLOWED_ORIGINS` to**: `http://localhost:3000, https://your-app.vercel.app` (removing the general wildcard).
+   * **Set `CORS_ALLOWED_ORIGINS` to**: `http://localhost:3000, https://web-ten-lime-73.vercel.app` (removing the general wildcard).
 3. In your **Auth0 Application Dashboard**, add your Vercel production domain to the **Allowed Callback URLs**, **Allowed Logout URLs**, and **Allowed Origins (CORS)** lists.
 
 ---
