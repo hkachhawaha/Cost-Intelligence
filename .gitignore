@@ -38,3 +38,4 @@ google-credentials*.json
 .terraform/
 *.tfstate
 *.tfstate.*
+.vercel
