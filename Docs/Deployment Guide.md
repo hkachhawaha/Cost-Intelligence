@@ -13,10 +13,15 @@ graph TB
     end
 
     subgraph Backend ["Render Cloud Platform"]
-        FastAPI["FastAPI App Container<br/>(API Port 8000)"]
-        CeleryWorker["Celery Background Worker<br/>(AI matching & analytics)"]
+        subgraph WebService ["Render Web Service Container"]
+            FastAPI["FastAPI App Process<br/>(API Port 8000)"]
+            CeleryWorker["Celery Background Worker Process<br/>(AI matching & analytics)"]
+        end
         Postgres["Managed PostgreSQL<br/>(pgvector + RLS)"]
-        Redis["Managed Redis<br/>(Celery Broker & Cache)"]
+    end
+
+    subgraph RedisProvider ["Upstash Cloud"]
+        Redis["Serverless Redis Broker<br/>(Celery Queue & Cache)"]
     end
 
     subgraph IDP ["External Services"]
@@ -51,40 +56,31 @@ graph TB
   * `AUTH0_CLIENT_ID`: Auth0 Web Client ID.
   * `AUTH0_CLIENT_SECRET`: Auth0 Web Client Secret.
 
-### FastAPI Backend & Celery Worker (Render)
-Both backend components are built directly using your repository's Docker configuration.
+### Unified FastAPI Backend & Celery Worker (Render)
+To operate within Render's Free tier limits, both the API and the background worker are packaged and executed concurrently inside a single container using a startup script (`start.sh`).
 
-#### 1. PostgreSQL Database
+#### 1. PostgreSQL Database (Render)
 * Create a **Render PostgreSQL** database.
-* Ensure pgvector is active (active by default in Render Postgres instances).
+* Copy the connection string.
 
-#### 2. Redis Instance
-* Create a **Render Redis** instance (configured in Redis mode).
+#### 2. Redis Cache (Upstash)
+* Create a serverless Redis database on Upstash (free tier).
+* Copy the Redis connection string.
 
-#### 3. FastAPI Web Service
-* Create a **Web Service** on Render, pointing to your repo.
+#### 3. FastAPI Web Service (Render)
+* Create a new **Web Service** on Render, pointing to your repo.
 * **Runtime**: Docker
 * **Docker Context**: Root of monorepo
 * **Dockerfile Path**: `apps/api/Dockerfile`
 * **Required Environment Variables**:
   * `ENVIRONMENT`: `production`
   * `DATABASE_URL`: Connection string of your Render Postgres database (e.g. `postgresql://...`).
-  * `REDIS_URL`: Connection string of your Render Redis database (e.g. `rediss://...`).
+  * `REDIS_URL`: Connection string of your Upstash Redis database (e.g. `redis://...`).
   * `SECRETS_PROVIDER`: `redis` (dynamic token caching).
   * `AUTH0_DOMAIN`: Auth0 domain.
   * `AUTH0_AUDIENCE`: Auth0 Client Audience ID.
   * `GEMINI_API_KEY`: Google Gemini Developer API key.
   * `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins (e.g. `http://localhost:3000, https://your-app.vercel.app`).
-
-#### 4. Celery Worker (Background Worker)
-* Create a **Background Worker** on Render using the same repo.
-* **Runtime**: Docker
-* **Dockerfile Path**: `apps/api/Dockerfile`
-* **Docker Start Command**: Override the default Docker CMD to run:
-  ```bash
-  uv run celery -A app.workers.ingestion_tasks worker --loglevel=info
-  ```
-* Binds the same environment variables as the Web Service (`DATABASE_URL`, `REDIS_URL`, etc.).
 
 ---
 
@@ -93,8 +89,8 @@ Both backend components are built directly using your repository's Docker config
 To deploy the stack correctly without circular dependencies, follow this step-by-step sequence:
 
 ### Step 1: Deploy the Backend on Render
-1. Set up your **PostgreSQL** and **Redis** database services on Render.
-2. Deploy the FastAPI **Web Service** and **Background Worker** using `apps/api/Dockerfile`.
+1. Set up your **PostgreSQL** database on Render and **Redis** database on Upstash.
+2. Deploy the FastAPI **Web Service** using the Dockerfile (Render will run `start.sh` automatically to apply migrations and spin up both the API and the Celery worker processes).
 3. Configure the required environment variables.
 4. Configure CORS to accept temporary origins:
    * **Set `CORS_ALLOWED_ORIGINS` to**: `http://localhost:3000, https://*.vercel.app` (permits local testing and Vercel preview hostings).
@@ -122,10 +118,9 @@ Below is a detailed cost estimation for running the platform in a standard produ
 | Service Provider | Component | Tier / Size | Estimated Monthly Cost | Notes |
 | :--- | :--- | :--- | :--- | :--- |
 | **Vercel** | Frontend App | Pro Plan | **$20.00** | Includes team collaboration, preview deployments, and global CDN. |
-| **Render** | FastAPI API | Starter Web Service (512MB RAM, 0.5 CPU) | **$7.00** | Scales based on active requests. |
-| **Render** | Celery Worker | Background Worker (512MB RAM, 0.5 CPU) | **$7.00** | Processes ingestion and AI matching jobs. |
+| **Render** | API & Celery Worker | Starter Web Service (512MB RAM, 0.5 CPU) | **$7.00** | Runs FastAPI and Celery concurrently inside the same container. |
 | **Render** | PostgreSQL | Starter DB (1GB RAM, 0.25 CPU, 20GB SSD) | **$7.00** | Managed Postgres database with `pgvector` enabled. |
-| **Render** | Redis Cache | Starter Redis (256MB RAM) | **$10.00** | Celery broker and transient secrets store. |
+| **Upstash** | Redis Cache | Serverless Free Tier | **$0.00** | Fully managed Redis queue broker and transient token cache. |
 | **Auth0** | Identity Provider | B2C Essentials | **$23.00** | Paid tier required for custom domain SSL and compliance. |
 | **Google** | Gemini API | Pay-as-you-go | **$15.00** | Estimate based on processing ~200 contracts/month. |
-| **Total** | | | **$89.00 / month** | **Highly cost-effective baseline for production.** |
+| **Total** | | | **$72.00 / month** | **Highly optimized cost baseline for production.** |

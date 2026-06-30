@@ -22,5 +22,8 @@ COPY apps/api ./apps/api
 COPY migrations ./migrations
 COPY alembic.ini ./
 
+# Make start script executable
+RUN chmod +x ./apps/api/start.sh
+
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./apps/api/start.sh"]
