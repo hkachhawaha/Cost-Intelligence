@@ -6,7 +6,7 @@ alembic upgrade head
 
 # Start Celery worker in the background
 echo "Starting Celery worker..."
-celery -A app.workers.ingestion_tasks worker --loglevel=info &
+celery -A app.workers.ingestion_tasks worker --loglevel=info --concurrency=1 &
 
 # Start FastAPI API in the foreground (PID 1)
 echo "Starting FastAPI application..."
