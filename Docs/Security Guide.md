@@ -1,6 +1,6 @@
-# Security & Tenant Isolation Guide (Vercel & Railway)
+# Security & Tenant Isolation Guide (Vercel & Render)
 
-This document details the security architecture, authorization design, and tenant isolation policies enforced when deploying **Terzo Cost Intelligence** on Vercel and Railway.
+This document details the security architecture, authorization design, and tenant isolation policies enforced when deploying **Terzo Cost Intelligence** on Vercel and Render.
 
 ---
 
@@ -9,10 +9,10 @@ This document details the security architecture, authorization design, and tenan
 ```
 User Browser ────(HTTPS)────► Vercel (Next.js Frontend)
      │
-     └───────────(HTTPS)────► Railway Service (FastAPI Backend)
+     └───────────(HTTPS)────► Render Service (FastAPI Backend)
 ```
 
-* **TLS Termination**: All public traffic terminates TLS 1.2+ at Vercel (for frontend) and Railway's load balancer (for backend).
+* **TLS Termination**: All public traffic terminates TLS 1.2+ at Vercel (for frontend) and Render's load balancer (for backend).
 * **CORS Policies**: The FastAPI backend configures CORS rules restricting incoming origins exclusively to the verified Vercel production domain (`https://*.vercel.app` or your custom domain).
 
 ---
@@ -23,7 +23,7 @@ PostgreSQL Row Level Security is the primary defense against cross-tenant data b
 
 ### Database Roles Separation
 To ensure RLS cannot be bypassed at runtime:
-1. **The `app` Role (Railway Web Process)**:
+1. **The `app` Role (Render Web Process)**:
    * Has standard `SELECT`, `INSERT`, `UPDATE`, `DELETE` privileges.
    * **Does NOT** have the `BYPASSRLS` attribute.
    * All queries executed by the FastAPI web service automatically go through RLS policies.
@@ -52,5 +52,5 @@ The application utilizes **Auth0** for user identity:
 ## 4. Secrets Management
 
 * **No Plaintext Configuration**: Credentials and secret keys (`AUTH0_CLIENT_SECRET`, `GEMINI_API_KEY`, database connection passwords) are never committed to git.
-* **Environment Injection**: Production parameters are injected directly into Railway's service settings and mapped to container environments.
-* **Redis Caching for Dynamic Tokens**: Refresh tokens and dynamic connection details are encrypted and stored in a shared Redis cache (using the `redis` secrets provider), preventing file leaks on Railway's ephemeral container disks.
+* **Environment Injection**: Production parameters are injected directly into Render's service environment settings and mapped to container environments.
+* **Redis Caching for Dynamic Tokens**: Refresh tokens and dynamic connection details are encrypted and stored in a shared Redis cache (using the `redis` secrets provider), preventing file leaks on Render's ephemeral container disks.

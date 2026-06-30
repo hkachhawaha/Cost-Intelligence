@@ -206,8 +206,8 @@ Stand up a running, multi-tenant monorepo skeleton — FastAPI backend, Next.js 
 - Next.js 14 bootstrap: root `layout.tsx`, `middleware.ts` route protection, `lib/api.ts` typed fetch client, Auth0 SDK session handling.
 - GitHub Actions `ci.yml` (lint, typecheck, migration dry-run, tests, RLS isolation test gate).
 - RBAC role/permission matrix (7 roles) seeded.
-- Secrets management approach (Auth0 + Vercel/Railway environment config + Redis secrets store; no secrets in repo).
-- PaaS deployment guide / Terraform module outline for the cloud foundation (Vercel, Railway, Postgres, Redis, KMS).
+- Secrets management approach (Auth0 + Vercel/Render environment config + Redis secrets store; no secrets in repo).
+- PaaS deployment guide / Terraform module outline for the cloud foundation (Vercel, Render, Postgres, Redis, KMS).
 - OpenTelemetry bootstrap (traces + metrics from API and workers to an OTLP collector).
 
 **Out of scope (deferred to later phases)**
@@ -1691,7 +1691,7 @@ These also write an `audit_events` row (`event_type` = `"user_logged_in"` / `"te
 - **Transaction-local tenant binding** (`set_config(..., true)`) eliminates connection-pool tenant bleed — the classic multi-tenant footgun.
 - **RS256 only**: signature algorithm is pinned; `alg:none` and symmetric-key confusion attacks are rejected.
 - **JWKS caching with rotation handling**: public keys cached with TTL + on-demand refresh on unknown `kid`; no shared secret stored in the app.
-- **Secrets management**: no secret in the repo. Local dev uses a git-ignored `.env`; staging/prod read from Railway Environment Config, Redis cache store, or AWS/GCP secrets managers via `secrets_provider`. Auth0 client secret, DB password, and `GEMINI_API_KEY` live only there. Deployment configs inject secret references at runtime.
+- **Secrets management**: no secret in the repo. Local dev uses a git-ignored `.env`; staging/prod read from Render Environment Config, Redis cache store, or AWS/GCP secrets managers via `secrets_provider`. Auth0 client secret, DB password, and `GEMINI_API_KEY` live only there. Deployment configs inject secret references at runtime.
 - **Per-tenant encryption key reference** (`tenants.encryption_key_ref`) recorded now so later phases can do per-tenant envelope encryption of sensitive columns/objects (blueprint §12.2).
 - **Append-only audit log** is the rollback and forensics substrate (§5.4); immutability is DB-enforced, not app-trusted.
 - **CORS** locked to the known web origin per environment.
@@ -2022,14 +2022,14 @@ packages:
   - "packages/*"
 ```
 
-### 15.5 PaaS Deployment (Vercel & Railway) & Terraform Cloud Foundation
+### 15.5 PaaS Deployment (Vercel & Render) & Terraform Cloud Foundation
 
-#### Vercel & Railway Deployment Blueprint
+#### Vercel & Render Deployment Blueprint
 * **Frontend (Vercel)**: Next.js App Router deployed directly via Vercel GitHub integration. Configures `AUTH0_BASE_URL` and `NEXT_PUBLIC_API_BASE` endpoints.
-* **Backend Web Service (Railway)**: FastAPI application running inside a Docker container. Binds to port `8000`.
-* **Celery Workers (Railway)**: Duplicate container service running Celery queues. Binds to the same databases.
-* **PostgreSQL (Railway)**: Managed Postgres 16/17 database with `pgvector` enabled. Enforces RLS with `app` vs `migration` role privileges.
-* **Redis (Railway)**: Managed Redis cache. Serves as Celery message broker and runs transient dynamic secret storage (under `SECRETS_PROVIDER=redis`).
+* **Backend Web Service (Render)**: FastAPI application running inside a Docker container. Binds to port `8000`.
+* **Celery Workers (Render)**: Duplicate container service running Celery queues. Binds to the same databases.
+* **PostgreSQL (Render)**: Managed Postgres 16/17 database with `pgvector` enabled. Enforces RLS with `app` vs `migration` role privileges.
+* **Redis (Render)**: Managed Redis cache. Serves as Celery message broker and runs transient dynamic secret storage (under `SECRETS_PROVIDER=redis`).
 
 #### Terraform Cloud Foundation Outline (AWS/GCP Option)
 ```hcl
