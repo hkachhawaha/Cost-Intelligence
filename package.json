@@ -11,6 +11,9 @@
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down"
   },
+  "dependencies": {
+    "next": "14.2.15"
+  },
   "packageManager": "pnpm@9.7.0",
   "engines": {
     "node": ">=20"
