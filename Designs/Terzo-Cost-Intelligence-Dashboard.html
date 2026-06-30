@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terzo Cost Intelligence</title>
+<style>
+  :root{
+    --purple:#6d28d9;--purple-d:#5b21b6;--purple-l:#ede9fe;--purple-xl:#f6f3fe;--acc:#8b5cf6;
+    --ink:#1c1830;--muted:#736f86;--line:#ece8f6;--bg:#f4f2fb;--card:#fff;
+    --green:#0f9d58;--green-bg:#e7f6ee;--amber:#e07b1a;--amber-bg:#fdf1e3;--red:#e0394b;--red-bg:#fdebed;--blue:#2563eb;--blue-bg:#e9f0fe;
+    --shadow:0 1px 2px rgba(40,30,80,.04),0 10px 30px rgba(60,40,120,.06);
+    --shadow-lg:0 4px 14px rgba(60,40,120,.10),0 20px 50px rgba(60,40,120,.10);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+  .app{display:flex;min-height:100vh}
+  .side{width:238px;flex:none;background:#fff;border-right:1px solid var(--line);padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:2px}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 12px}
+  .brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(150deg,var(--purple),#a78bfa);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;box-shadow:0 4px 12px rgba(109,40,217,.35)}
+  .brand b{font-size:15.5px;letter-spacing:-.2px}.brand span{display:block;font-size:11px;color:var(--muted)}
+  nav .grp{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#b3aec6;font-weight:800;padding:13px 12px 5px}
+  nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:11px;color:#514d63;text-decoration:none;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:1px}
+  nav a .ic{font-size:16px;width:19px;text-align:center}
+  nav a:hover{background:var(--purple-xl)}
+  nav a.active{background:linear-gradient(120deg,var(--purple),var(--acc));color:#fff;box-shadow:0 6px 16px rgba(109,40,217,.28)}
+  nav a .ct{margin-left:auto;font-size:10.5px;background:var(--purple-l);color:var(--purple-d);border-radius:20px;padding:1px 8px;font-weight:700}
+  nav a.active .ct{background:rgba(255,255,255,.25);color:#fff}
+  .askbtn{margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border-radius:13px;border:none;cursor:pointer;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(120deg,#e07b1a,#d946ef);box-shadow:0 8px 20px rgba(190,60,160,.28)}
+  .main{flex:1;min-width:0;padding:24px 30px 70px;max-width:1200px}
+  .hi{font-size:13px;color:var(--muted);font-weight:600}
+  .pt{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:2px 0 2px}
+  .psub{color:var(--muted);font-size:13.5px;margin:0 0 18px;max-width:760px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px}
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+  .hero{background:linear-gradient(135deg,#6d28d9,#8b5cf6 60%,#a78bfa);color:#fff;border:none;border-radius:22px;padding:24px 26px;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.10)}
+  .hero .lbl{font-size:13px;color:#e9e1fb;font-weight:600}.hero .big{font-size:42px;font-weight:850;letter-spacing:-1.5px;margin:6px 0 2px}
+  .hero .sub{color:#efe9fd;font-size:13px;max-width:520px}
+  .hero .chips{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .hchip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:13px;padding:7px 12px;font-size:12px;font-weight:600}.hchip b{font-size:15px;display:block;font-weight:800}
+  .hero .cta{margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--purple-d);border:none;border-radius:11px;padding:10px 16px;font-weight:750;font-size:13px;cursor:pointer}
+  .metric{display:flex;align-items:center;gap:14px}
+  .metric .mt{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .metric .mv{font-size:24px;font-weight:800;letter-spacing:-.5px;margin-top:3px}.metric .ms{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px 16px}
+  .kpi .mt{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .mv{font-size:23px;font-weight:800;letter-spacing:-.5px;margin-top:4px}.kpi .ms{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kpi.pp{background:linear-gradient(135deg,#6d28d9,#8b5cf6);border:none;color:#fff}.kpi.pp .mt,.kpi.pp .ms{color:#e9e1fb}
+  .kpi.gg{background:linear-gradient(135deg,#0f9d58,#34d399);border:none;color:#fff}.kpi.gg .mt,.kpi.gg .ms{color:#dff5e8}
+  .sectlbl{font-size:16px;font-weight:800;letter-spacing:-.3px;margin:24px 0 12px;display:flex;align-items:center;gap:9px}
+  .sectlbl .more{margin-left:auto;font-size:12.5px;font-weight:600;color:var(--purple);cursor:pointer}
+  .opp{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+  .opp .row1{display:flex;align-items:flex-start;gap:13px}
+  .opp .icon{width:42px;height:42px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px}
+  .ic-sav{background:var(--purple-l);color:var(--purple-d)}.ic-rec{background:var(--amber-bg);color:var(--amber)}
+  .opp .ttl{font-weight:750;font-size:14.5px}.opp .vend{font-size:12.5px;color:var(--muted)}
+  .opp .amt{margin-left:auto;text-align:right;flex:none}.opp .amt .n{font-size:20px;font-weight:800;letter-spacing:-.5px}.opp .amt .k{font-size:10.5px;color:var(--muted);font-weight:600}
+  .opp .desc{font-size:12.8px;color:#4a4660;line-height:1.5}.opp .desc b{color:var(--ink)}
+  .opp .foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}.p-sav{background:var(--purple-l);color:var(--purple-d)}.p-rec{background:var(--amber-bg);color:var(--amber)}
+  .conf{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}.c-high{background:var(--green-bg);color:var(--green)}.c-med{background:var(--amber-bg);color:var(--amber)}.c-low{background:var(--red-bg);color:var(--red)}
+  .st{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}.st-open{background:#eef0ff;color:#4a4ab0}.st-prog{background:var(--amber-bg);color:var(--amber)}.st-rec{background:var(--green-bg);color:var(--green)}
+  .btn{font-size:12.5px;font-weight:650;padding:8px 13px;border-radius:11px;border:1px solid var(--line);background:#fff;cursor:pointer}.btn:hover{background:#faf9ff}.btn.p{background:var(--purple);color:#fff;border-color:var(--purple)}.btn.g{background:var(--green);color:#fff;border-color:var(--green)}.btn.sm{padding:6px 11px;font-size:12px}
+  .opp .detail{border-top:1px dashed var(--line);margin-top:2px;padding-top:12px;display:none}.opp.open .detail{display:block}
+  .formula{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#1c1830;color:#ddd4f5;padding:11px 13px;border-radius:10px;white-space:pre-wrap;line-height:1.6;margin:6px 0}.formula b{color:#c9b8fa}
+  .linkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chips{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
+  .fchip{font-size:13px;font-weight:600;padding:8px 15px;border-radius:22px;border:1px solid var(--line);background:#fff;cursor:pointer;color:#514d63}.fchip.on{background:var(--purple);color:#fff;border-color:var(--purple)}
+  .bar{display:flex;align-items:center;gap:12px;margin:10px 0}.bar .nm{width:140px;font-size:12.5px;flex:none;text-align:right;color:#4a4660;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .tk{flex:1;background:#f1eef9;border-radius:9px;height:14px;overflow:hidden}.bar .fl{height:100%;border-radius:9px;background:linear-gradient(90deg,var(--purple),#a78bfa)}
+  .bar .fl.g{background:linear-gradient(90deg,#0f9d58,#34d399)}.bar .fl.a{background:linear-gradient(90deg,#e07b1a,#f59e0b)}.bar .fl.r{background:linear-gradient(90deg,#e0394b,#f87171)}
+  .bar .vl{width:64px;flex:none;font-size:12.5px;font-weight:700}
+  .alert{display:flex;gap:13px;align-items:flex-start;padding:13px 15px;border-radius:14px;font-size:13px;border:1px solid var(--line);background:#fff}
+  .alert .ai{width:36px;height:36px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .a-r .ai{background:var(--red-bg)}.a-a .ai{background:var(--amber-bg)}.a-b .ai{background:var(--blue-bg)}.a-g .ai{background:var(--green-bg)}.alert .at{font-weight:700;margin-bottom:1px}
+  .vrow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}.vrow:last-child{border:none}
+  .vrow .av{width:40px;height:40px;border-radius:11px;background:var(--purple-xl);color:var(--purple-d);font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+  .badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px}.b-auto{background:var(--amber-bg);color:var(--amber)}.b-opt{background:#eef0ff;color:#4a4ab0}.b-exp{background:var(--red-bg);color:var(--red)}.b-ok{background:var(--green-bg);color:var(--green)}.b-soon{background:var(--amber-bg);color:var(--amber)}.b-risk{background:var(--red-bg);color:var(--red)}
+  .ccard{display:flex;align-items:center;gap:16px;padding:16px 18px}
+  .find{display:flex;gap:13px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow);margin-bottom:11px}
+  .find .fi{width:40px;height:40px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--purple-l);color:var(--purple-d)}
+  .find .ft{font-weight:700;font-size:13.5px;margin-bottom:1px}.find .fd{font-size:12.5px;color:#4a4660;line-height:1.45}
+  .formrow{display:flex;align-items:center;gap:14px;margin:13px 0;font-size:13.5px}.formrow label{width:240px;flex:none;color:#4a4660;font-weight:600}
+  .formrow input[type=range]{accent-color:var(--purple);width:220px}.formrow input[type=number],.formrow input[type=date]{padding:8px 11px;border:1px solid var(--line);border-radius:10px}
+  .verdict{padding:14px 16px;border-radius:14px;font-weight:800;font-size:16px;margin:14px 0;display:flex;gap:10px;align-items:center}.v-app{background:var(--green-bg);color:var(--green)}.v-con{background:var(--amber-bg);color:var(--amber)}.v-blk{background:var(--red-bg);color:var(--red)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:#4a4660;margin-top:8px}.dot{width:11px;height:11px;border-radius:4px;display:inline-block;margin-right:6px;vertical-align:middle}
+  .empty{color:var(--muted);font-size:13px;padding:22px;text-align:center}
+  .nv-launch{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(150deg,#e07b1a,#d946ef);color:#fff;font-size:23px;box-shadow:0 10px 28px rgba(150,40,160,.40);z-index:50}
+  .nv-panel{position:fixed;top:0;right:0;width:400px;max-width:96vw;height:100vh;background:#fff;border-left:1px solid var(--line);box-shadow:-16px 0 50px rgba(40,30,80,.18);z-index:60;display:flex;flex-direction:column}
+  .nv-head{display:flex;align-items:center;justify-content:space-between;padding:17px 20px;border-bottom:1px solid var(--line)}
+  .nv-logo,.nv-word{font-weight:850;background:linear-gradient(90deg,#e07b1a,#d946ef,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}.nv-logo{font-size:19px}.nv-word{font-size:32px}
+  .nv-x{border:none;background:none;font-size:17px;color:var(--muted);cursor:pointer}.nv-body{flex:1;overflow:auto;padding:20px}
+  .nv-hero{text-align:center;padding:28px 10px 14px}.nv-greet{color:var(--muted);margin-top:6px;font-size:14px}
+  .nv-s{display:flex;align-items:center;gap:11px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;font-size:13.5px;cursor:pointer}.nv-s:hover{background:var(--purple-xl);border-color:var(--purple-l)}
+  .nv-q{align-self:flex-end;background:var(--purple);color:#fff;border-radius:15px 15px 4px 15px;padding:10px 14px;font-size:13px;margin:10px 0 5px;max-width:84%}
+  .nv-a{align-self:flex-start;background:#f6f4fc;border:1px solid var(--line);border-radius:15px 15px 15px 4px;padding:12px 15px;font-size:13px;margin:0 0 10px;max-width:90%;line-height:1.55}.nv-a pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;margin:0}
+  .nv-msgs{display:flex;flex-direction:column}.nv-foot{border-top:1px solid var(--line);padding:14px 16px}
+  .nv-input{display:flex;gap:9px;align-items:center;border:1px solid var(--purple-l);border-radius:14px;padding:6px 7px 6px 14px}.nv-input input{flex:1;border:none;outline:none;font-size:13.5px;background:none;color:var(--ink)}
+  #nv-send{border:none;background:var(--purple);color:#fff;width:36px;height:36px;border-radius:11px;cursor:pointer;font-size:14px;flex:none}
+  .ccard.clickable{cursor:pointer;transition:box-shadow .15s,transform .15s}.ccard.clickable:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}.kv:last-child{border:none}.kv span{color:var(--muted)}.kv b{color:var(--ink);text-align:right}
+  .backlink{display:inline-flex;align-items:center;gap:6px;color:var(--purple);font-weight:650;font-size:13px;cursor:pointer;margin-bottom:10px}.backlink:hover{text-decoration:underline}
+  .reco{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.reco:last-child{border:none}.reco .ri{width:38px;height:38px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .vtoggle{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:4px;width:fit-content}
+  .vtoggle button{border:none;background:none;padding:7px 14px;border-radius:9px;font-size:13px;font-weight:650;color:#514d63;cursor:pointer}.vtoggle button.on{background:var(--purple);color:#fff}
+  .ltable{width:100%;border-collapse:collapse;font-size:13px}
+  .ltable th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;padding:10px;border-bottom:2px solid var(--line)}
+  .ltable td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--ink)}
+  .ltable tbody tr{cursor:pointer}.ltable tbody tr:hover{background:var(--purple-xl)}
+  .ut{display:inline-block;width:54px;height:7px;border-radius:5px;background:#f1eef9;overflow:hidden;vertical-align:middle;margin-right:7px}.ut>i{display:block;height:100%}
+  @media(max-width:1000px){.side{display:none}.g4,.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}.bar .nm{width:96px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">T</div><div><b>Terzo</b><span>Cost Intelligence</span></div></div>
+    <nav id="nav"></nav>
+    <button class="askbtn" id="askbtn">✦ Ask NirvanaI</button>
+  </aside>
+  <main class="main"><div class="hi" id="hi"></div><div class="pt" id="ptitle"></div><div class="psub" id="psub"></div><div id="view"></div></main>
+</div>
+<div id="nirvana-root"></div>
+<script>
+"use strict";
+/* ============ ENGINE (verified) ============ */
+const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+const fmtK=n=>{n=Math.round(n);return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/100)/10+'k';};
+const pct=(a,b)=>b?(a/b*100):0;
+const daysBetween=(a,b)=>Math.round((a-b)/86400000);
+const d=s=>new Date(s+'T00:00:00');
+const esc=s=>(''+s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STATE={current:'home',settings:{recapture:0.10,unusedPct:0.15,overspendPct:0.05,lookahead:90,asOf:'2026-06-19'},
+  statuses:{}, oppFilter:'all', spendFilter:{q:'',cat:'',match:''}, ccl:{value:500000,term:3,indexShare:40,tolerance:25000}, indexMove:5, contractDetail:null, chat:{open:false,log:[]}};
+const ASOF=()=>d(STATE.settings.asOf);
+const L1={'Software / Cloud':'Technology','Software':'Technology','Telecom':'Technology','Hardware':'Technology','Professional Svcs':'Services','Security':'Services','Logistics':'Services','Facilities':'Facilities & Admin','Office':'Facilities & Admin'};
+const l1Of=c=>L1[c]||'Other';
+const contracts=[
+ {id:'C-1001',vendor:'Acme Cloud Services',category:'Software / Cloud',entity:'NA Corp',costCenter:'CC-IT-01',status:'Active',start:'2025-10-01',end:'2026-09-30',acv:240000,tcv:480000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:7,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:240000,po:'PO-AC-001'},
+ {id:'C-1002',vendor:'Globex Telecom',category:'Telecom',entity:'EU GmbH',costCenter:'CC-NET-02',status:'Active',start:'2026-01-16',end:'2027-01-15',acv:180000,tcv:540000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:3,indexType:'CPI-linked',indexedShare:60,yearlyCommit:180000,po:'PO-GX-010'},
+ {id:'C-1003',vendor:'Initech Consulting',category:'Professional Svcs',entity:'NA Corp',costCenter:'CC-OPS-03',status:'Active',start:'2025-08-01',end:'2026-07-31',acv:300000,tcv:600000,paymentTermDays:60,renewalType:'Auto-renewal',renewalNoticeDays:30,uplift:5,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:null,po:'PO-IN-021'},
+ {id:'C-1004',vendor:'Umbrella Facilities',category:'Facilities',entity:'EU GmbH',costCenter:'CC-FAC-04',status:'Active',start:'2026-01-01',end:'2026-12-31',acv:120000,tcv:360000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:10,indexType:'CPI-linked',indexedShare:80,yearlyCommit:120000,po:'PO-UM-033'},
+ {id:'C-1005',vendor:'Soylent Supplies',category:'Office',entity:'NA Corp',costCenter:'CC-ADM-05',status:'Active',start:'2026-04-01',end:'2027-03-31',acv:90000,tcv:180000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:4,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:90000,po:'PO-SY-044'},
+ {id:'C-1006',vendor:'Wayne Security',category:'Security',entity:'NA Corp',costCenter:'CC-SEC-06',status:'Active',start:'2025-08-16',end:'2026-08-15',acv:150000,tcv:300000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:60,uplift:6,indexType:'CPI-linked',indexedShare:70,yearlyCommit:150000,po:'PO-WS-055'},
+ {id:'C-1007',vendor:'Stark Analytics',category:'Software',entity:'APAC Pte',costCenter:'CC-IT-01',status:'Active',start:'2025-07-01',end:'2027-06-30',acv:210000,tcv:420000,paymentTermDays:45,renewalType:'Option to renew',renewalNoticeDays:90,uplift:5,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:210000,po:'PO-ST-066'},
+ {id:'C-1008',vendor:'Hooli Data',category:'Software / Cloud',entity:'NA Corp',costCenter:'CC-IT-01',status:'Active',start:'2025-11-01',end:'2026-10-31',acv:264000,tcv:528000,paymentTermDays:60,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:8,indexType:'CPI-linked',indexedShare:90,yearlyCommit:264000,po:'PO-HL-077'},
+ {id:'C-1009',vendor:'Cyberdyne Hardware',category:'Hardware',entity:'NA Corp',costCenter:'CC-IT-01',status:'Expired',start:'2024-06-01',end:'2026-05-31',acv:75000,tcv:150000,paymentTermDays:30,renewalType:'None',renewalNoticeDays:0,uplift:0,indexType:'None',indexedShare:0,yearlyCommit:null,po:'PO-CY-088'},
+ {id:'C-1010',vendor:'Vandelay Logistics',category:'Logistics',entity:'EU GmbH',costCenter:'CC-OPS-03',status:'Active',start:'2026-03-01',end:'2027-02-28',acv:130000,tcv:260000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:3,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:130000,po:'PO-VL-099'}
+];
+let _n=0;const sid=()=>'S-'+String(++_n).padStart(3,'0');
+function gen(vendor,amount,count,po,gl,cc,m){const o=[];for(let i=0;i<count;i++)o.push({id:sid(),vendor,amount,spendDate:`2026-${String(m+i).padStart(2,'0')}-12`,po,gl,costCenter:cc,source:'Coupa',invoice:'INV-'+(1000+_n)});return o;}
+let spend=[];
+spend=spend.concat(gen('Acme Cloud Services',45000,6,'PO-AC-001','044.01001.74222.20737','CC-IT-01',1));
+spend=spend.concat(gen('Globex Telecom',30000,4,'PO-GX-010','051.02002.61110.30122','CC-NET-02',1));
+spend=spend.concat(gen('Initech Consulting',60000,5,'PO-IN-021','070.03003.55400.40310','CC-OPS-03',1));
+spend=spend.concat(gen('Umbrella Facilities',35000,2,'PO-UM-033','088.04004.62220.50455','CC-FAC-04',1));
+spend=spend.concat(gen('Soylent Supplies',20000,3,'PO-SY-044','090.05005.61500.60511','CC-ADM-05',1));
+spend=spend.concat(gen('Wayne Security',29000,5,'PO-WS-055','066.06006.74100.70622','CC-SEC-06',1));
+spend=spend.concat(gen('Stark Analytics',50000,4,'PO-ST-066','044.01001.74222.20737','CC-IT-01',1));
+spend=spend.concat(gen('Hooli Data',50000,5,'PO-HL-077','044.01001.74900.20780','CC-IT-01',1));
+spend=spend.concat(gen('Vandelay Logistics',30000,4,'PO-VL-099','070.03003.55700.40330','CC-OPS-03',1));
+spend.push({id:sid(),vendor:'Globex Telecommunications',amount:30000,spendDate:'2026-05-12',po:null,gl:'051.02002.61110.30122',costCenter:'CC-NET-02',source:'Oracle',invoice:'INV-GX-VAR-1'});
+spend.push({id:sid(),vendor:'Soylent Supplies',amount:11000,spendDate:'2026-04-05',po:'PO-SY-044',gl:'090.05005.61500.60511',costCenter:'CC-ADM-05',source:'Coupa',invoice:'INV-SY-300'});
+spend.push({id:sid(),vendor:'Soylent Supplies',amount:11000,spendDate:'2026-04-07',po:'PO-SY-044',gl:'090.05005.61500.60511',costCenter:'CC-ADM-05',source:'Coupa',invoice:'INV-SY-300'});
+spend.push({id:sid(),vendor:'Cyberdyne Hardware',amount:8000,spendDate:'2026-06-05',po:'PO-CY-088',gl:'044.01001.71000.20790',costCenter:'CC-IT-01',source:'SAP',invoice:'INV-CY-901'});
+spend.push({id:sid(),vendor:'Cyberdyne Hardware',amount:6000,spendDate:'2026-06-12',po:'PO-CY-088',gl:'044.01001.71000.20790',costCenter:'CC-IT-01',source:'SAP',invoice:'INV-CY-902'});
+[['Pied Piper Cloud',28000,'Software / Cloud'],['Dunder Mifflin',12000,'Office'],['Wonka Industries',9000,'Facilities'],['Gekko Capital',22000,'Professional Svcs'],['Bluth Construction',15000,'Facilities']].forEach(([v,a,c],i)=>{spend.push({id:sid(),vendor:v,amount:a,spendDate:`2026-0${3+i%3}-18`,po:null,gl:'099.09009.69999.90999',costCenter:'CC-MISC-09',source:'Oracle',invoice:'INV-OFF-'+(700+i),category:c});});
+const STOP=new Set(['inc','llc','ltd','co','corp','company','group','the','holdings']);
+const norm=s=>s.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(t=>t&&!STOP.has(t));
+function tokenSim(a,b){const A=norm(a),B=norm(b);if(!A.length||!B.length)return 0;let m=0;const u=new Array(B.length).fill(false);A.forEach(ta=>{for(let j=0;j<B.length;j++){if(u[j])continue;const tb=B[j];if(ta===tb||(ta.length>=4&&tb.length>=4&&(ta.startsWith(tb)||tb.startsWith(ta)))){u[j]=true;m++;break;}}});return m/Math.max(A.length,B.length);}
+function matchOne(s){if(s.po){const c=contracts.find(c=>c.po===s.po);if(c)return{contractId:c.id,method:'PO',confidence:0.97};}let best=null,sc=0;contracts.forEach(c=>{const ex=norm(s.vendor).join(' ')===norm(c.vendor).join(' ');const sim=ex?1:tokenSim(s.vendor,c.vendor);if(sim>sc){sc=sim;best=c;}});if(best){if(norm(s.vendor).join(' ')===norm(best.vendor).join(' '))return{contractId:best.id,method:'Vendor (exact)',confidence:0.85};if(sc>=0.99)return{contractId:best.id,method:'Vendor (fuzzy)',confidence:0.70};if(sc>=0.5)return{contractId:best.id,method:'Vendor (fuzzy)',confidence:0.55};}return{contractId:null,method:'Unmatched',confidence:0};}
+spend.forEach(s=>{const m=matchOne(s);s.contractId=m.contractId;s.method=m.method;s.confidence=m.confidence;});
+const cById=id=>contracts.find(c=>c.id===id);
+const byContract=id=>spend.filter(s=>s.contractId===id);
+const sum=a=>a.reduce((t,s)=>t+s.amount,0);
+const catOf=s=>s.category||(s.contractId?cById(s.contractId).category:'Uncategorised');
+const canonVendor=s=>s.contractId?cById(s.contractId).vendor:s.vendor;
+const entityOf=s=>s.contractId?cById(s.contractId).entity:'Unassigned';
+const RECOVERY=new Set(['Overspend vs contract','Spend after expiry','Duplicate invoice']);
+function detect(){
+  const S=STATE.settings,R=S.recapture,opps=[];
+  const mav=spend.filter(s=>!s.contractId),mavExp=sum(mav);
+  if(mavExp>0)opps.push({id:'maverick',type:'Maverick spend',icon:'🧭',tag:'Off-contract',act:'Consolidate suppliers & reduce leakage',subject:`${mav.length} invoices · ${new Set(mav.map(s=>s.vendor)).size} vendors`,impact:mavExp*R,exposure:mavExp,confidence:0.78,conf:'med',
+    rationale:`<b>${fmt(mavExp)}</b> of spend across ${new Set(mav.map(s=>s.vendor)).size} vendors has no matching contract. Bringing it under contract typically recaptures 5–15%.`,
+    formula:`Exposure = Σ unmatched spend = <b>${fmt(mavExp)}</b>\nEst. savings = Exposure × ${Math.round(R*100)}% = <b>${fmt(mavExp*R)}</b>`,
+    action:`Consolidate these vendors under negotiated agreements; draft an RFP for the biggest category.`,evidence:mav});
+  contracts.forEach(c=>{if(c.yearlyCommit==null)return;const a=sum(byContract(c.id)),sf=c.yearlyCommit-a;if(sf>S.unusedPct*c.yearlyCommit)opps.push({id:'unused:'+c.id,type:'Unused commitment',icon:'📉',tag:'Unused commit',act:'Resolve commitment gaps',subject:c.vendor,contractId:c.id,impact:sf,confidence:0.9,conf:'high',
+    rationale:`Committed <b>${fmt(c.yearlyCommit)}</b>/yr but only <b>${fmt(a)}</b> used — ${Math.round(pct(sf,c.yearlyCommit))}% (<b>${fmt(sf)}</b>) sitting idle.`,
+    formula:`Shortfall = Commit − Actual = ${fmt(c.yearlyCommit)} − ${fmt(a)} = <b>${fmt(sf)}</b>`,action:`Right-size the ${c.vendor} commitment toward ${fmt(a)} at renewal.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{const a=sum(byContract(c.id)),o=a-c.acv;if(o>S.overspendPct*c.acv)opps.push({id:'overspend:'+c.id,type:'Overspend vs contract',icon:'⚠️',tag:'Overspend',act:'Recover margin',subject:c.vendor,contractId:c.id,impact:o,confidence:0.85,conf:'high',
+    rationale:`Paid <b>${fmt(a)}</b> vs an annual value of <b>${fmt(c.acv)}</b> — <b>${fmt(o)}</b> over (${Math.round(pct(o,c.acv))}%). Worth an audit.`,
+    formula:`Overage = Actual − ACV = ${fmt(a)} − ${fmt(c.acv)} = <b>${fmt(o)}</b>`,action:`Request a rate / line-item audit from ${c.vendor}.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{if(c.renewalType!=='Auto-renewal')return;const nd=new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000),dl=daysBetween(nd,ASOF());if(dl<=S.lookahead){const uc=c.acv*c.uplift/100,urg=dl<=0;
+    opps.push({id:'autorenew:'+c.id,type:'Silent auto-renewal',icon:'🔁',tag:'Auto-renewal',act:'Renegotiate contract',subject:c.vendor,contractId:c.id,impact:uc,confidence:0.9,conf:'high',
+    rationale:`Auto-renews ${urg?`<b style="color:#e0394b">— notice window has passed</b>`:`in ${dl} days`}, locking in a ${c.uplift}% uplift on ${fmt(c.acv)} (<b>${fmt(uc)}</b>/yr).`,
+    formula:`Negotiable uplift = ACV × ${c.uplift}% = <b>${fmt(uc)}</b>`,action:`Send ${c.vendor} a renegotiation / non-renewal notice before ${nd.toISOString().slice(0,10)}.`,evidence:byContract(c.id)});}});
+  const af=new Set(opps.filter(o=>o.type==='Silent auto-renewal').map(o=>o.contractId));
+  contracts.forEach(c=>{if(c.uplift<=0||af.has(c.id)||c.status==='Expired')return;const uc=c.acv*c.uplift/100;
+    opps.push({id:'uplift:'+c.id,type:'Renewal uplift creep',icon:'📈',tag:'Uplift creep',act:'Renegotiate contract',subject:c.vendor,contractId:c.id,impact:uc,confidence:0.72,conf:'med',
+    rationale:`Carries a ${c.uplift}% renewal uplift on ${fmt(c.acv)} — <b>${fmt(uc)}</b>/yr you can challenge at renewal.`,
+    formula:`Annual uplift = ACV × ${c.uplift}% = <b>${fmt(uc)}</b>`,action:`Flag the ${c.uplift}% uplift for renegotiation; request a cap.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{const post=byContract(c.id).filter(s=>d(s.spendDate)>d(c.end)),amt=sum(post);if(amt>0)opps.push({id:'expiry:'+c.id,type:'Spend after expiry',icon:'⌛',tag:'Post-expiry',act:'Recover margin',subject:c.vendor,contractId:c.id,impact:amt,confidence:0.88,conf:'high',
+    rationale:`Contract expired ${c.end}, but <b>${fmt(amt)}</b> was billed after — off-contract and recoverable.`,
+    formula:`Post-expiry = Σ spend after ${c.end} = <b>${fmt(amt)}</b>`,action:`Stop or re-paper ${c.vendor}; recover post-expiry charges.`,evidence:post});});
+  const seen={};spend.forEach(s=>{(seen[s.invoice]=seen[s.invoice]||[]).push(s);});
+  Object.values(seen).forEach(g=>{if(g.length>1&&g.every(x=>x.amount===g[0].amount)){const rec=g[0].amount*(g.length-1);
+    opps.push({id:'dup:'+g[0].invoice,type:'Duplicate invoice',icon:'📑',tag:'Duplicate',act:'Recover margin',subject:g[0].vendor,contractId:g[0].contractId,impact:rec,confidence:0.82,conf:'high',
+    rationale:`Invoice ${g[0].invoice} (${fmt(g[0].amount)}) was paid ${g.length} times — <b>${fmt(rec)}</b> recoverable.`,
+    formula:`Recoverable = ${fmt(g[0].amount)} × ${g.length-1} = <b>${fmt(rec)}</b>`,action:`Issue a debit memo to ${g[0].vendor} for the duplicate.`,evidence:g});}});
+  opps.forEach(o=>{o.status=STATE.statuses[o.id]||'open';o.score=o.impact*o.confidence;o.bucket=RECOVERY.has(o.type)?'recovery':'savings';});
+  opps.sort((a,b)=>b.score-a.score);return opps;
+}
+function kpis(opps){const total=sum(spend),matched=sum(spend.filter(s=>s.contractId)),mav=total-matched;
+  const identified=opps.reduce((t,o)=>t+o.impact,0),recovered=opps.filter(o=>o.status==='recovered').reduce((t,o)=>t+o.impact,0);
+  const recoverable=opps.filter(o=>o.bucket==='recovery').reduce((t,o)=>t+o.impact,0),savings=opps.filter(o=>o.bucket==='savings').reduce((t,o)=>t+o.impact,0);
+  return {total,matched,mav,identified,recovered,recoverable,savings,oppCount:opps.length,sum:pct(matched,total),po:sum(spend.filter(s=>s.method==='PO'))};}
+function answer(q){q=(''+q).toLowerCase();const opps=detect(),k=kpis(opps);const inDays=n=>contracts.filter(c=>{const dd=daysBetween(d(c.end),ASOF());return dd>=0&&dd<=n;});
+  if(q.includes('auto-renew')){const t=opps.filter(o=>o.type==='Silent auto-renewal');return t.length?`${t.length} contract(s) auto-renew soon: `+t.map(o=>`<b>${o.subject}</b> (${fmt(o.impact)})`).join(', ')+'.':'No auto-renewals in the window.';}
+  if(q.includes('renewal')){const t=opps.filter(o=>o.type==='Silent auto-renewal'||o.type==='Renewal uplift creep');return `${t.length} contracts carry renewal exposure totalling ${fmt(t.reduce((a,o)=>a+o.impact,0))}. Biggest: `+(t[0]?`<b>${t[0].subject}</b> (${fmt(t[0].impact)})`:'none')+'.';}
+  if(q.includes('expir')){const e=inDays(90);return e.length?`${e.length} contract(s) expire within 90 days: `+e.map(c=>`<b>${c.vendor}</b> (${c.end})`).join(', ')+'.':'None expiring within 90 days.';}
+  if(q.includes('off-contract')||q.includes('maverick')){const m=opps.find(o=>o.id==='maverick');return m?`${fmt(m.exposure)} is off-contract across ${m.subject}; ~${fmt(m.impact)} recoverable.`:'No off-contract spend.';}
+  if(q.includes('commit')){const cc=contracts.filter(x=>x.yearlyCommit!=null);const tot=cc.reduce((t,x)=>t+x.yearlyCommit,0);return `${cc.length} contracts carry ${fmt(tot)} of commitments; under-used commitments total ${fmt(opps.filter(o=>o.type==='Unused commitment').reduce((a,o)=>a+o.impact,0))}.`;}
+  if(q.includes('recover')){return `${fmt(k.recoverable)} is recoverable right now — duplicates, post-expiry and overspend.`;}
+  if(q.includes('vendor')||q.includes('supplier')||q.includes('consolidat')){const map={};spend.forEach(s=>{const c=catOf(s);(map[c]=map[c]||new Set()).add(canonVendor(s));});const m=Object.entries(map).filter(([c,s])=>s.size>1);return m.length?'Consolidation candidates: '+m.map(([c,s])=>`<b>${c}</b> (${s.size} vendors)`).join(', ')+'.':'No multi-vendor categories.';}
+  if(q.includes('save the most')||q.includes('save')||q.includes('priorit')){const t=opps.slice(0,3);return 'Top opportunities: '+t.map(o=>`<b>${o.type} — ${o.subject||''}</b> (${fmt(o.impact)})`).join('; ')+'.';}
+  if(q.includes('total')||q.includes('how much')){return `${fmt(k.identified)} of identified opportunity on ${fmt(k.total)} of spend (${pct(k.identified,k.total).toFixed(1)}%).`;}
+  return `Try: where can I save the most, what auto-renews soon, how much is off-contract, what's recoverable, or commitments.`;
+}
+function genDoc(type,vendor){const c=contracts.find(x=>x.vendor===vendor);const opps=detect().filter(o=>c&&o.contractId===c.id);const L=[];
+  L.push('To: '+vendor+' — Account Management');L.push('From: Procurement, [Your Company]');L.push('Date: '+STATE.settings.asOf);if(c)L.push('Re: Contract '+c.id);L.push('');
+  if(type==='challenge'){const rec=detect().filter(o=>o.bucket==='recovery'&&((c&&o.contractId===c.id)||o.subject===vendor));const tot=rec.reduce((t,o)=>t+o.impact,0);
+    L.push('Dear '+vendor+',');L.push('');L.push('A reconciliation identified discrepancies totalling '+fmt(tot)+' we request be credited:');rec.forEach(o=>L.push('• '+o.type+': '+fmt(o.impact)));if(!rec.length)L.push('• [no recovery items]');L.push('');L.push('Please confirm credit within '+(c?c.paymentTermDays:30)+' days.');L.push('Regards, Accounts Payable');
+  } else {L.push('Dear '+vendor+' team,');L.push('');L.push('As part of an annual review of '+(c?'contract '+c.id:'our agreement')+', we would like to renegotiate ahead of renewal.');opps.forEach(o=>L.push('• '+o.type+' — opportunity '+fmt(o.impact)));L.push('');L.push('Could we schedule a call in the next two weeks?');L.push('Best regards, Procurement');}
+  return L.join('\n');
+}
+/* ============ VISUALS ============ */
+function ring(p,size=86,stroke=10,color='var(--purple)'){const r=(size-stroke)/2,c=2*Math.PI*r,off=c*(1-Math.min(p,100)/100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eee7f7" stroke-width="${stroke}"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="50%" text-anchor="middle" dy="0.35em" font-size="${size*0.25}" font-weight="800" fill="var(--ink)">${Math.round(p)}%</text></svg>`;}
+function donut(segs,size=160,stroke=30){const r=(size-stroke)/2,c=2*Math.PI*r;let acc=0;const total=segs.reduce((t,s)=>t+s.value,0)||1;let arcs='';segs.forEach(s=>{const dash=c*(s.value/total);arcs+=`<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${dash} ${c-dash}" stroke-dashoffset="${-acc}" transform="rotate(-90 ${size/2} ${size/2})"/>`;acc+=dash;});return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#f1eef9" stroke-width="${stroke}"/>${arcs}</svg>`;}
+const CATCOL=['#6d28d9','#8b5cf6','#a78bfa','#e07b1a','#2563eb','#0f9d58','#d946ef','#c4b5fd'];
+function bars(rows,cls){const mx=Math.max(...rows.map(r=>r[1]),1);return rows.map(([n,v])=>`<div class="bar"><div class="nm" title="${esc(n)}">${esc(n)}</div><div class="tk"><div class="fl ${cls||''}" style="width:${Math.max(4,v/mx*100)}%"></div></div><div class="vl">${fmtK(v)}</div></div>`).join('');}
+function vbars(rows,h=130){const mx=Math.max(...rows.map(r=>r[1]),1);return `<div style="display:flex;align-items:flex-end;gap:9px;height:${h}px;padding-top:14px">`+rows.map(([n,v])=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%"><div style="font-size:9.5px;color:var(--muted);margin-bottom:3px">${fmtK(v)}</div><div style="width:78%;background:linear-gradient(180deg,#a78bfa,#6d28d9);border-radius:6px 6px 0 0;height:${Math.max(3,v/mx*100)}%"></div><div style="font-size:10px;color:var(--muted);margin-top:6px">${n}</div></div>`).join('')+`</div>`;}
+
+/* ============ NAV + ROUTER ============ */
+const confCls=c=>c==='high'?'c-high':c==='med'?'c-med':'c-low', confLbl=c=>c==='high'?'High':c==='med'?'Medium':'Low';
+const stCls=s=>s==='recovered'?'st-rec':s==='in_progress'?'st-prog':'st-open', stLbl=s=>s==='recovered'?'Recovered':s==='in_progress'?'In progress':'Open';
+const NAV=[
+ ['Overview',[['home','Home','🏠'],['opps','Opportunities','💡']]],
+ ['Analyze',[['analyze','Analyze','🔎'],['spend','Spend','💸'],['contracts','Contracts','📑'],['vendors','Vendors','🏢'],['indexation','Indexation','∿']]],
+ ['Act',[['act','Act','✅'],['recovery','Margin Recovery','💰'],['renewals','Renewals','⏰'],['commitments','Commitments','🎯'],['commitcheck','Commitment Check','🛡️']]],
+ ['Intelligence',[['intelligence','Intelligence','✦'],['portfolio','Portfolio','🗂️']]],
+ ['System',[['quality','Data Quality','◑'],['settings','Settings','⚙️']]],
+];
+const TITLES={home:["Here's your cost intelligence",'A quick read on where money is leaking and what to do about it.'],
+ opps:['Opportunities','Every chance to recover or save, ranked by impact.'],
+ analyze:['Analyze','AI-generated cost insights — trends, utilisation, variance and supplier performance.'],
+ spend:['Spend','Where your money is going — and how much is under contract.'],
+ contracts:['Contracts','Your agreements, utilisation and renewals at a glance.'],
+ vendors:['Vendors','Supplier spend, concentration, performance, risk and opportunities.'],
+ indexation:['Indexation & Exposure','Index / COLA-linked contracts and the cost risk if indices rise.'],
+ act:['Act','Recommended actions from NirvanaI — go straight from insight to action.'],
+ recovery:['Margin Recovery','Recoverable cash — discrepancies, leakage and missed value, packaged to challenge.'],
+ renewals:['Renewals','What is coming up — act before auto-renewals lock in.'],
+ commitments:['Commitments','Track contractual commitments, consumption, utilisation and variance.'],
+ commitcheck:['Commitment Check','Stress-test a proposed commitment before you sign it.'],
+ intelligence:['Intelligence','AI findings, anomalies, opportunities and recommendations — powered by NirvanaI.'],
+ portfolio:['Portfolio','Your whole cost portfolio across suppliers, contracts, invoices and spend.'],
+ quality:['Data Quality','Match confidence and what still needs a human eye.'],
+ settings:['Settings','Tune the assumptions behind every number.']};
+function renderNav(){
+  const opps=detect();const cnt={opps:opps.filter(o=>o.status!=='recovered').length,recovery:opps.filter(o=>o.bucket==='recovery'&&o.status!=='recovered').length,act:opps.filter(o=>o.status==='open').length};
+  let h='';NAV.forEach(([g,items])=>{h+=`<div class="grp">${g}</div>`;items.forEach(([id,nm,ic])=>{h+=`<a data-tab="${id}" class="${id===STATE.current?'active':''}"><span class="ic">${ic}</span>${nm}${cnt[id]?`<span class="ct">${cnt[id]}</span>`:''}</a>`;});});
+  document.getElementById('nav').innerHTML=h;
+  document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>{STATE.current=a.dataset.tab;STATE.contractDetail=null;render();});
+}
+function render(){
+  renderNav();const now=new Date(STATE.settings.asOf+'T09:00');const hr=now.getHours();
+  document.getElementById('hi').textContent=STATE.current==='home'?((hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+', Himalaya'):'';
+  const[t,s]=TITLES[STATE.current];document.getElementById('ptitle').textContent=t;document.getElementById('psub').textContent=s;
+  ({home:vHome,opps:vOpps,analyze:vAnalyze,spend:vSpend,contracts:vContracts,vendors:vVendors,indexation:vIndex,act:vAct,recovery:vRecovery,renewals:vRenewals,commitments:vCommit,commitcheck:vCCL,intelligence:vIntel,portfolio:vPortfolio,quality:vQuality,settings:vSettings}[STATE.current])();
+}
+const V=h=>document.getElementById('view').innerHTML=h;
+
+/* opportunity card (shared) */
+function oppCard(o,i){
+  const ev=(o.evidence||[]).slice(0,6).map(s=>`<div class="vrow" style="padding:7px 0"><div style="font-size:12px;color:var(--muted);width:58px">${s.id}</div><div style="flex:1;font-size:12.5px">${esc(s.vendor)}</div><div style="font-size:12.5px;font-weight:700">${fmt(s.amount)}</div><div style="font-size:11px;color:var(--muted);width:78px;text-align:right">${s.spendDate}</div></div>`).join('');
+  const cf=o.contractId?cById(o.contractId):null;const isRec=o.bucket==='recovery';
+  return `<div class="opp" data-i="${i}">
+    <div class="row1"><div class="icon ${isRec?'ic-rec':'ic-sav'}">${o.icon||'💡'}</div>
+      <div style="min-width:0"><div class="ttl">${o.type}</div><div class="vend">${cf?esc(cf.vendor):esc(o.subject||'')}</div></div>
+      <div class="amt"><div class="n">${fmtK(o.impact)}</div><div class="k">${isRec?'recover now':'per year'}</div></div></div>
+    <div class="desc">${o.rationale}</div>
+    <div class="foot"><span class="pill ${isRec?'p-rec':'p-sav'}">${isRec?'Recovery':'Savings'}</span><span class="conf ${confCls(o.conf)}">${confLbl(o.conf)} confidence</span><span class="st ${stCls(o.status)}">${stLbl(o.status)}</span><span class="more" style="margin-left:auto;color:var(--purple);font-size:12.5px;font-weight:600;cursor:pointer" data-exp="${i}">Details ›</span></div>
+    <div class="detail" id="dt-${i}"><div style="font-size:12.5px;color:#4a4660;margin-bottom:4px"><b>How we got the number</b></div><div class="formula">${o.formula}</div>
+      <div style="font-size:12.5px;color:#4a4660;margin:8px 0 2px"><b>Recommended action.</b> ${esc(o.action)}</div>
+      ${ev?`<div style="font-size:11.5px;color:var(--muted);margin-top:8px;text-transform:uppercase;letter-spacing:.4px">Evidence (${(o.evidence||[]).length})</div>${ev}`:''}
+      <div class="linkrow"><button class="btn sm ${o.status==='in_progress'?'p':''}" data-set="in_progress" data-id="${o.id}">Mark in progress</button><button class="btn sm ${o.status==='recovered'?'g':''}" data-set="recovered" data-id="${o.id}">Mark done</button>${cf?`<button class="btn sm" data-draft="${esc(cf.vendor)}" data-dt="${isRec?'challenge':'reneg'}">✦ Draft with NirvanaI</button>`:''}</div></div></div>`;
+}
+function wireOpps(){
+  document.querySelectorAll('[data-exp]').forEach(e=>e.onclick=()=>{const c=document.querySelectorAll('.opp')[e.dataset.exp];c.classList.toggle('open');e.textContent=c.classList.contains('open')?'Hide ‹':'Details ›';});
+  document.querySelectorAll('button[data-set]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.id]=b.dataset.set;render();});
+  document.querySelectorAll('button[data-draft]').forEach(b=>b.onclick=()=>draftDoc(b.dataset.draft,b.dataset.dt));
+}
+function draftDoc(v,ty){STATE.chat.log.push({q:(ty==='challenge'?'Draft a supplier challenge letter for ':'Draft a renegotiation note for ')+v,a:'<pre>'+esc(genDoc(ty==='challenge'?'challenge':'reneg',v))+'</pre>'});STATE.chat.open=true;renderChat();}
+
+/* ============ HOME ============ */
+function vHome(){
+  const opps=detect(),k=kpis(opps);const byL1={};spend.forEach(s=>byL1[l1Of(catOf(s))]=(byL1[l1Of(catOf(s))]||0)+s.amount);
+  const segs=Object.entries(byL1).sort((a,b)=>b[1]-a[1]).map(([n,v],i)=>({label:n,value:v,color:CATCOL[i%CATCOL.length]}));
+  const alerts=[];opps.filter(o=>o.type==='Silent auto-renewal').slice(0,1).forEach(o=>alerts.push(['a','⏰',o.subject+' auto-renews soon',`${fmt(o.impact)} uplift is negotiable — act before the window closes.`]));
+  opps.filter(o=>o.type==='Duplicate invoice').slice(0,1).forEach(o=>alerts.push(['b','📑','Possible double payment to '+o.subject,`${fmt(o.impact)} looks recoverable.`]));
+  opps.filter(o=>o.type==='Spend after expiry').slice(0,1).forEach(o=>alerts.push(['r','⌛',o.subject+' billing after expiry',`${fmt(o.impact)} spent after the contract ended.`]));
+  V(`<div class="grid g2" style="grid-template-columns:1.5fr 1fr;align-items:stretch">
+    <div class="hero"><div class="lbl">We found money across your spend</div><div class="big">${fmtK(k.identified)}</div>
+      <div class="sub">${pct(k.identified,k.total).toFixed(1)}% of your ${fmtK(k.total)} in spend — provable against your own contracts.</div>
+      <div class="chips"><div class="hchip">Recover now<b>${fmtK(k.recoverable)}</b></div><div class="hchip">Save each year<b>${fmtK(k.savings)}</b></div><div class="hchip">Recovered<b>${fmtK(k.recovered)}</b></div></div>
+      <button class="cta" id="goOpps">Review top actions →</button></div>
+    <div class="card"><div class="metric"><div>${ring(k.sum,92,11)}</div><div><div class="mt">Spend under management</div><div class="mv">${fmtK(k.matched)}</div><div class="ms">of ${fmtK(k.total)} on contract</div></div></div>
+      <div style="border-top:1px solid var(--line);margin:14px 0"></div>
+      <div class="metric"><div class="icon ic-rec" style="width:46px;height:46px;font-size:21px;border-radius:14px">🧭</div><div><div class="mt">Off-contract exposure</div><div class="mv">${fmtK(k.mav)}</div><div class="ms">spend with no contract</div></div></div></div></div>
+  <div class="sectlbl">🎯 Top things to act on <span class="more" id="goAct">Open Act ›</span></div>
+  <div class="grid g2">${opps.slice(0,4).map((o,i)=>oppCard(o,i)).join('')}</div>
+  <div class="grid g2" style="grid-template-columns:1fr 1fr;margin-top:18px">
+    <div class="card"><div class="sectlbl" style="margin:0 0 6px">💸 Where your money goes</div>
+      <div style="display:flex;align-items:center;gap:20px;margin-top:8px"><div>${donut(segs)}</div><div style="flex:1">${segs.map(s=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;margin:7px 0"><span class="dot" style="background:${s.color}"></span>${esc(s.label)}<b style="margin-left:auto">${fmtK(s.value)}</b></div>`).join('')}</div></div></div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 10px">🔔 Needs your attention</div>${alerts.length?alerts.map(a=>`<div class="alert a-${a[0]}" style="margin-bottom:10px"><div class="ai">${a[1]}</div><div><div class="at">${esc(a[2])}</div><div style="color:var(--muted);font-size:12.5px">${esc(a[3])}</div></div></div>`).join(''):'<div class="empty">All clear.</div>'}</div></div>`);
+  wireOpps();const g=document.getElementById('goOpps');if(g)g.onclick=()=>{STATE.current='opps';render();};const ga=document.getElementById('goAct');if(ga)ga.onclick=()=>{STATE.current='act';render();};
+}
+/* ============ OPPORTUNITIES ============ */
+function vOpps(){let opps=detect();const f=STATE.oppFilter;
+  const filt=opps.filter(o=> f==='all'?true:f==='recovery'?o.bucket==='recovery':f==='savings'?o.bucket==='savings':f==='open'?o.status!=='recovered':true);
+  const chips=[['all','All'],['recovery','Recover now'],['savings','Future savings'],['open','Still open']];
+  V(`<div class="chips">${chips.map(([k,l])=>`<div class="fchip ${f===k?'on':''}" data-f="${k}">${l}</div>`).join('')}<div style="margin-left:auto;align-self:center;font-size:13px;color:var(--muted)">${filt.length} opportunities · ${fmt(filt.reduce((t,o)=>t+o.impact,0))}</div></div>
+    <div class="grid g2">${filt.map((o,i)=>oppCard(o,i)).join('')||'<div class="empty">Nothing here — try another filter.</div>'}</div>`);
+  document.querySelectorAll('[data-f]').forEach(c=>c.onclick=()=>{STATE.oppFilter=c.dataset.f;vOpps();});wireOpps();
+}
+/* ============ ANALYZE ============ */
+function vAnalyze(){
+  const opps=detect(),k=kpis(opps);
+  const byMonth={};spend.forEach(s=>{const m=s.spendDate.slice(0,7);byMonth[m]=(byMonth[m]||0)+s.amount;});
+  const months=Object.keys(byMonth).sort().map(m=>[m.slice(5),byMonth[m]]);
+  const utilC=contracts.filter(c=>c.status!=='Expired').map(c=>({c,u:pct(sum(byContract(c.id)),c.yearlyCommit||c.acv)}));
+  const avgUtil=utilC.reduce((t,x)=>t+x.u,0)/utilC.length;
+  const variance=contracts.map(c=>({v:c.vendor,d:sum(byContract(c.id))-c.acv})).filter(x=>Math.abs(x.d)>1000).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,6);
+  const byVen={};spend.forEach(s=>byVen[canonVendor(s)]=(byVen[canonVendor(s)]||0)+s.amount);
+  const topVen=Object.entries(byVen).sort((a,b)=>b[1]-a[1]);const top3=topVen.slice(0,3).reduce((t,x)=>t+x[1],0);
+  // AI insights
+  const ins=[];
+  const topCat=Object.entries((()=>{const m={};spend.forEach(s=>m[catOf(s)]=(m[catOf(s)]||0)+s.amount);return m;})()).sort((a,b)=>b[1]-a[1])[0];
+  ins.push(['💸',`${topCat[0]} is your biggest category at ${fmt(topCat[1])} (${pct(topCat[1],k.total).toFixed(0)}% of spend).`]);
+  ins.push(['🧭',`${fmt(k.mav)} (${pct(k.mav,k.total).toFixed(0)}%) of spend is off-contract — the single largest leakage to close.`]);
+  ins.push(['📉',`Average contract utilisation is ${avgUtil.toFixed(0)}%; ${utilC.filter(x=>x.u<85).length} contracts are under-used and ${utilC.filter(x=>x.u>100).length} are over.`]);
+  ins.push(['🏢',`Your top 3 suppliers are ${pct(top3,k.total).toFixed(0)}% of spend — concentration to watch when negotiating.`]);
+  ins.push(['📈',`Renewal uplift exposure is ${fmt(opps.filter(o=>o.type==='Silent auto-renewal'||o.type==='Renewal uplift creep').reduce((a,o)=>a+o.impact,0))} across the contract book.`]);
+  V(`<div class="card" style="margin-bottom:16px"><div class="sectlbl" style="margin:0 0 10px">✦ AI-generated insights</div>${ins.map(x=>`<div class="find"><div class="fi">${x[0]}</div><div style="align-self:center"><div class="fd">${x[1]}</div></div></div>`).join('')}</div>
+  <div class="grid g2"><div class="card"><div class="sectlbl" style="margin:0 0 4px">📈 Spend trend</div><div class="psub" style="margin:0">Monthly spend across the year.</div>${vbars(months)}</div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 10px">🏢 Supplier performance</div><div class="psub" style="margin:0 0 6px">Top suppliers by spend.</div>${bars(topVen.slice(0,6))}</div></div>
+  <div class="grid g2" style="margin-top:16px"><div class="card"><div class="sectlbl" style="margin:0 0 10px">📊 Contract utilisation</div>
+    ${utilC.sort((a,b)=>a.u-b.u).slice(0,7).map(x=>`<div class="bar"><div class="nm">${esc(x.c.vendor)}</div><div class="tk"><div class="fl ${x.u>100?'r':x.u>=85?'g':'a'}" style="width:${Math.min(100,x.u)}%"></div></div><div class="vl">${x.u.toFixed(0)}%</div></div>`).join('')}</div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 10px">⚖️ Variance vs contract</div><div class="psub" style="margin:0 0 6px">Actual spend over (red) / under (green) the annual value.</div>
+    ${variance.map(x=>`<div class="bar"><div class="nm">${esc(x.v)}</div><div class="tk"><div class="fl ${x.d>0?'r':'g'}" style="width:${Math.min(100,Math.abs(x.d)/Math.max(...variance.map(v=>Math.abs(v.d)))*100)}%"></div></div><div class="vl" style="color:${x.d>0?'var(--red)':'var(--green)'}">${x.d>0?'+':''}${fmtK(x.d)}</div></div>`).join('')}</div></div>`);
+}
+/* ============ SPEND ============ */
+function vSpend(){
+  const total=sum(spend),matched=sum(spend.filter(s=>s.contractId)),mav=total-matched;
+  const byCat={};spend.forEach(s=>byCat[catOf(s)]=(byCat[catOf(s)]||0)+s.amount);
+  const byVen={};spend.forEach(s=>byVen[canonVendor(s)]=(byVen[canonVendor(s)]||0)+s.amount);
+  V(`<div class="grid g3"><div class="card"><div class="metric"><div>${ring(pct(matched,total),90,11,'var(--green)')}</div><div><div class="mt">Under contract</div><div class="mv">${fmtK(matched)}</div><div class="ms">well governed</div></div></div></div>
+    <div class="card"><div class="metric"><div class="icon ic-rec" style="width:52px;height:52px;font-size:23px;border-radius:15px">🧭</div><div><div class="mt">Off-contract</div><div class="mv">${fmtK(mav)}</div><div class="ms">${pct(mav,total).toFixed(0)}% maverick</div></div></div></div>
+    <div class="card"><div class="metric"><div class="icon ic-sav" style="width:52px;height:52px;font-size:23px;border-radius:15px">💸</div><div><div class="mt">Total spend</div><div class="mv">${fmtK(total)}</div><div class="ms">${spend.length} transactions</div></div></div></div></div>
+  <div class="grid g2" style="margin-top:16px"><div class="card"><div class="sectlbl" style="margin:0 0 10px">By category</div>${bars(Object.entries(byCat).sort((a,b)=>b[1]-a[1]))}</div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 10px">Top vendors</div>${Object.entries(byVen).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([v,a])=>`<div class="vrow"><div class="av">${esc(v).slice(0,1)}</div><div style="flex:1"><div style="font-weight:650;font-size:13.5px">${esc(v)}</div><div style="font-size:12px;color:var(--muted)">${contracts.find(c=>c.vendor===v)?'on contract':'no contract'}</div></div><div style="font-weight:800">${fmtK(a)}</div></div>`).join('')}</div></div>`);
+}
+/* ============ CONTRACTS ============ */
+function vContracts(){
+  if(STATE.contractDetail){return contractDetail(STATE.contractDetail);}
+  const opps=detect();const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  const view=STATE.contractView||'cards';
+  const toggle=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><div class="vtoggle"><button class="${view==='cards'?'on':''}" data-v="cards">▦ Cards</button><button class="${view==='table'?'on':''}" data-v="table">≣ Table</button></div><span style="font-size:13px;color:var(--muted)">${contracts.length} contracts · ${fmtK(sum(spend.filter(s=>s.contractId)))} under management</span></div>`;
+  let body;
+  if(view==='table'){
+    body=`<div class="card" style="padding:6px 16px"><table class="ltable"><thead><tr><th>Contract</th><th>Supplier</th><th>Category</th><th>Entity</th><th style="text-align:right">ACV</th><th style="text-align:right">Actual</th><th>Utilisation</th><th>Renewal</th><th>Ends</th><th style="text-align:right">Opportunity</th><th></th></tr></thead><tbody>
+    ${contracts.map(c=>{const act=sum(byContract(c.id)),base=c.yearlyCommit||c.acv,u=pct(act,base);const col=u>100?'var(--red)':u>=80?'var(--green)':'var(--amber)';
+      const badge=c.status==='Expired'?'<span class="badge b-exp">Expired</span>':c.renewalType==='Auto-renewal'?'<span class="badge b-auto">Auto</span>':'<span class="badge b-opt">Option</span>';
+      return `<tr data-cd="${c.id}"><td style="font-weight:600">${c.id}</td><td style="font-weight:600">${esc(c.vendor)}</td><td>${c.category}</td><td>${c.entity}</td><td style="text-align:right">${fmtK(c.acv)}</td><td style="text-align:right">${fmtK(act)}</td><td><span class="ut"><i style="width:${Math.min(100,u)}%;background:${col}"></i></span>${u.toFixed(0)}%</td><td>${badge}</td><td>${c.end}</td><td style="text-align:right;font-weight:700;color:var(--purple-d)">${oppByC[c.id]?fmtK(oppByC[c.id]):'—'}</td><td style="color:var(--purple);font-weight:700">›</td></tr>`;}).join('')}
+    </tbody></table></div>`;
+  } else {
+    body=`<div class="grid g2">${contracts.map(c=>{const act=sum(byContract(c.id)),base=c.yearlyCommit||c.acv,u=pct(act,base);const col=u>100?'var(--red)':u>=80?'var(--green)':'var(--amber)';
+      const badge=c.status==='Expired'?'<span class="badge b-exp">Expired</span>':c.renewalType==='Auto-renewal'?'<span class="badge b-auto">Auto-renews</span>':'<span class="badge b-opt">Option to renew</span>';
+      return `<div class="card ccard clickable" data-cd="${c.id}"><div>${ring(Math.min(u,100),76,9,col)}</div><div style="flex:1;min-width:0"><div style="font-weight:750;font-size:15px">${esc(c.vendor)}</div><div style="font-size:12.5px;color:var(--muted);margin:1px 0 8px">${c.category} · ${c.entity}</div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${badge}<span style="font-size:12.5px;color:#4a4660">ACV ${fmtK(c.acv)}</span><span style="font-size:12.5px;color:var(--muted)">ends ${c.end}</span></div>${oppByC[c.id]?`<div style="margin-top:8px;font-size:12.5px;color:var(--purple-d);font-weight:700">💡 ${fmtK(oppByC[c.id])} opportunity</div>`:''}<div style="margin-top:8px;color:var(--purple);font-size:12.5px;font-weight:650">View details ›</div></div></div>`;}).join('')}</div>`;
+  }
+  V(toggle+body);
+  document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{STATE.contractView=b.dataset.v;vContracts();});
+  document.querySelectorAll('[data-cd]').forEach(e=>e.onclick=()=>{STATE.contractDetail=e.dataset.cd;render();});
+}
+function contractDetail(id){
+  const c=cById(id);const act=sum(byContract(id));const base=c.yearlyCommit||c.acv;const u=pct(act,base);
+  const opps=detect().filter(o=>o.contractId===id);const rec=opps.filter(o=>o.bucket==='recovery');const oppTot=opps.reduce((t,o)=>t+o.impact,0);
+  const nd=c.renewalNoticeDays?new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000).toISOString().slice(0,10):'—';
+  const invMap={};byContract(id).forEach(s=>{const m=invMap[s.invoice]=invMap[s.invoice]||{inv:s.invoice,amt:0,n:0,po:s.po,method:s.method};m.amt+=s.amount;m.n++;});
+  const invoices=Object.values(invMap);const recs=byContract(id);
+  const col=u>100?'var(--red)':u>=80?'var(--green)':'var(--amber)';
+  const consumed=Math.min(act,base),remaining=base-act,variance=act-c.acv;
+  const insightHtml=opps.length?opps.map(o=>`<div class="reco"><div class="ri ${o.bucket==='recovery'?'ic-rec':'ic-sav'}">${o.icon}</div><div style="flex:1"><div style="font-weight:700;font-size:13px">${o.type} · ${fmtK(o.impact)}</div><div style="font-size:12.5px;color:#4a4660;margin:2px 0">${o.rationale}</div><div style="font-size:12.5px;color:var(--purple-d)"><b>Action:</b> ${esc(o.action)}</div><div class="linkrow" style="margin-top:6px"><button class="btn sm" data-draft="${esc(c.vendor)}" data-dt="${o.bucket==='recovery'?'challenge':'reneg'}">✦ Draft with NirvanaI</button><button class="btn sm ${o.status==='recovered'?'g':''}" data-set="recovered" data-id="${o.id}">Mark done</button></div></div></div>`).join(''):'<div class="empty">No issues detected — utilisation and terms look healthy.</div>';
+  V(`<div class="backlink" id="cdback">‹ Back to contracts</div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px"><div class="av" style="width:50px;height:50px;font-size:20px;border-radius:14px">${esc(c.vendor).slice(0,1)}</div>
+    <div><div style="font-size:22px;font-weight:800;letter-spacing:-.5px">${esc(c.vendor)}</div><div style="color:var(--muted);font-size:13px">${c.id} · ${c.category} · ${c.entity}</div></div>
+    <div style="margin-left:auto">${c.status==='Expired'?'<span class="badge b-exp">Expired</span>':c.renewalType==='Auto-renewal'?'<span class="badge b-auto">Auto-renews</span>':'<span class="badge b-opt">Option to renew</span>'}</div></div>
+  <div class="grid g4" style="margin:14px 0 4px">
+    <div class="kpi"><div class="mt">Annual value</div><div class="mv">${fmtK(c.acv)}</div><div class="ms">TCV ${fmtK(c.tcv)}</div></div>
+    <div class="kpi"><div class="mt">Actual spend</div><div class="mv">${fmtK(act)}</div><div class="ms">${recs.length} transactions</div></div>
+    <div class="kpi"><div class="mt">Utilisation</div><div class="mv" style="color:${col}">${u.toFixed(0)}%</div><div class="ms">of ${c.yearlyCommit!=null?'commitment':'ACV'}</div></div>
+    <div class="kpi ${oppTot?'pp':''}"><div class="mt">Opportunity</div><div class="mv">${oppTot?fmtK(oppTot):'—'}</div><div class="ms">${opps.length} finding${opps.length!==1?'s':''}</div></div></div>
+  <div class="grid g2">
+    <div class="card"><div class="sectlbl" style="margin:0 0 8px">📋 Contract overview</div>
+      <div class="kv"><span>Supplier</span><b>${esc(c.vendor)}</b></div>
+      <div class="kv"><span>Category / Entity</span><b>${c.category} · ${c.entity}</b></div>
+      <div class="kv"><span>Cost centre</span><b>${c.costCenter}</b></div>
+      <div class="kv"><span>Contract value (ACV / TCV)</span><b>${fmt(c.acv)} / ${fmt(c.tcv)}</b></div>
+      <div class="kv"><span>Term</span><b>${c.start} → ${c.end}</b></div>
+      <div class="kv"><span>Payment terms</span><b>Net ${c.paymentTermDays}</b></div>
+      <div class="kv"><span>Renewal</span><b>${c.renewalType}${c.renewalNoticeDays?' · '+c.renewalNoticeDays+'d notice':''}</b></div>
+      <div class="kv"><span>Notice deadline</span><b>${nd}</b></div>
+      <div class="kv"><span>Renewal uplift</span><b>${c.uplift?c.uplift+'% ('+c.indexType+')':'—'}</b></div></div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 8px">🎯 Commitment &amp; variance</div>
+      <div style="display:flex;align-items:center;gap:18px;margin-bottom:6px"><div>${ring(Math.min(u,100),86,10,col)}</div>
+        <div style="flex:1"><div class="kv" style="border:none;padding:4px 0"><span>Commitment</span><b>${c.yearlyCommit!=null?fmt(c.yearlyCommit):'— (T&amp;M)'}</b></div><div class="kv" style="border:none;padding:4px 0"><span>Consumed</span><b>${fmt(consumed)}</b></div><div class="kv" style="border:none;padding:4px 0"><span>Remaining</span><b>${fmt(Math.max(0,remaining))}</b></div><div class="kv" style="border:none;padding:4px 0"><span>Variance vs ACV</span><b style="color:${variance>0?'var(--red)':'var(--green)'}">${variance>0?'+':''}${fmt(variance)}</b></div></div></div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px">Actual vs contract</div>
+      ${bars([['Actual',act],['ACV',c.acv]].concat(c.yearlyCommit!=null?[['Commitment',c.yearlyCommit]]:[]))}</div></div>
+  <div class="card" style="margin-top:16px"><div class="sectlbl" style="margin:0 0 4px">✦ AI insights &amp; recommended actions</div><div class="psub" style="margin:0 0 4px">From NirvanaI — grounded in this contract's spend.</div>${insightHtml}</div>
+  ${rec.length?`<div class="card" style="margin-top:16px"><div class="sectlbl" style="margin:0 0 6px">💰 Margin recovery on this contract</div>${rec.map(o=>`<div class="vrow"><div class="icon ic-rec" style="width:34px;height:34px;font-size:16px;border-radius:10px">${o.icon}</div><div style="flex:1"><div style="font-weight:650;font-size:13px">${o.type}</div><div style="font-size:12px;color:var(--muted)">${o.rationale.replace(/<[^>]+>/g,'').slice(0,90)}…</div></div><div style="font-weight:800">${fmt(o.impact)}</div></div>`).join('')}</div>`:''}
+  <div class="grid g2" style="margin-top:16px">
+    <div class="card"><div class="sectlbl" style="margin:0 0 8px">🧾 Related invoices (${invoices.length})</div>${invoices.length?invoices.map(iv=>`<div class="vrow"><div style="flex:1"><div style="font-weight:650;font-size:13px">${esc(iv.inv)}</div><div style="font-size:12px;color:var(--muted)">${iv.n} line${iv.n>1?'s':''} · ${iv.po||'no PO'} · ${iv.method}</div></div><div style="font-weight:800">${fmt(iv.amt)}</div></div>`).join(''):'<div class="empty">No invoices linked.</div>'}</div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 8px">💸 Related spend (${recs.length})</div>${recs.length?recs.map(s=>`<div class="vrow"><div style="font-size:12px;color:var(--muted);width:56px">${s.id}</div><div style="flex:1;font-size:12.5px">${s.spendDate}</div><div style="font-size:11px;color:var(--muted);width:86px">${s.po||'—'}</div><div style="font-weight:700">${fmt(s.amount)}</div></div>`).join(''):'<div class="empty">No spend linked.</div>'}</div></div>`);
+  document.getElementById('cdback').onclick=()=>{STATE.contractDetail=null;render();};
+  document.querySelectorAll('button[data-draft]').forEach(b=>b.onclick=()=>draftDoc(b.dataset.draft,b.dataset.dt));
+  document.querySelectorAll('button[data-set]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.id]=b.dataset.set;render();});
+}
+/* ============ VENDORS ============ */
+function vVendors(){
+  const opps=detect();const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  const map={};spend.forEach(s=>{const v=canonVendor(s);(map[v]=map[v]||{vendor:v,spend:0,recs:0,contracts:new Set(),cat:catOf(s),opp:0,matched:0}).spend+=s.amount;map[v].recs++;if(s.contractId){map[v].contracts.add(s.contractId);map[v].matched+=s.amount;}});
+  Object.values(map).forEach(v=>v.contracts.forEach(cid=>v.opp+=(oppByC[cid]||0)));
+  const rows=Object.values(map).sort((a,b)=>b.spend-a.spend);const total=rows.reduce((t,v)=>t+v.spend,0);
+  const top3=rows.slice(0,3).reduce((t,v)=>t+v.spend,0);
+  const catVen={};rows.forEach(v=>{(catVen[v.cat]=catVen[v.cat]||new Set()).add(v.vendor);});
+  const consol=Object.entries(catVen).filter(([c,s])=>s.size>1);
+  const risk=v=>{if(!v.contracts.size)return['b-risk','Off-contract'];const cs=[...v.contracts].map(cById);if(cs.some(c=>c&&c.renewalType==='Auto-renewal'))return['b-soon','Auto-renew'];if(cs.some(c=>c&&c.status==='Expired'))return['b-exp','Expired'];return['b-ok','Stable'];};
+  V(`<div class="grid g3" style="margin-bottom:16px">
+    <div class="kpi"><div class="mt">Suppliers</div><div class="mv">${rows.length}</div><div class="ms">${rows.filter(v=>!v.contracts.size).length} off-contract</div></div>
+    <div class="kpi pp"><div class="mt">Top-3 concentration</div><div class="mv">${pct(top3,total).toFixed(0)}%</div><div class="ms">of ${fmtK(total)} spend</div></div>
+    <div class="kpi"><div class="mt">Consolidation</div><div class="mv">${consol.length}</div><div class="ms">multi-vendor categories</div></div></div>
+  ${consol.length?`<div class="card" style="margin-bottom:16px"><div class="sectlbl" style="margin:0 0 8px">🤝 Consolidation opportunities</div>${consol.map(([c,s])=>`<div class="vrow"><div style="flex:1"><b>${esc(c)}</b> <span style="color:var(--muted);font-size:12.5px">— ${[...s].map(esc).join(', ')}</span></div><span class="badge b-opt">${s.size} vendors</span></div>`).join('')}</div>`:''}
+  <div class="grid g2">${rows.map(v=>{const[rc,rl]=risk(v);return `<div class="card" style="padding:16px 18px"><div style="display:flex;align-items:center;gap:13px"><div class="av" style="width:44px;height:44px;font-size:17px">${esc(v.vendor).slice(0,1)}</div>
+    <div style="flex:1;min-width:0"><div style="font-weight:750;font-size:14.5px">${esc(v.vendor)}</div><div style="font-size:12px;color:var(--muted)">${v.cat} · ${v.contracts.size} contract${v.contracts.size!==1?'s':''}</div></div>
+    <div style="text-align:right"><div style="font-weight:800;font-size:17px">${fmtK(v.spend)}</div><span class="badge ${rc}">${rl}</span></div></div>
+    <div style="display:flex;gap:18px;margin-top:12px;font-size:12.5px">
+      <div><div style="color:var(--muted)">Concentration</div><b>${pct(v.spend,total).toFixed(1)}%</b></div>
+      <div><div style="color:var(--muted)">Match</div><b>${pct(v.matched,v.spend).toFixed(0)}%</b></div>
+      <div><div style="color:var(--muted)">Opportunity</div><b style="color:var(--purple-d)">${v.opp?fmtK(v.opp):'—'}</b></div></div></div>`;}).join('')}</div>`);
+}
+/* ============ INDEXATION ============ */
+function vIndex(){
+  const mv=STATE.indexMove;const linked=contracts.filter(c=>c.indexType!=='None'&&c.status!=='Expired');
+  const rows=linked.map(c=>{const iv=c.acv*c.indexedShare/100;return{c,iv,exp:iv*mv/100};}).sort((a,b)=>b.exp-a.exp);
+  const totIv=rows.reduce((t,r)=>t+r.iv,0),totExp=rows.reduce((t,r)=>t+r.exp,0);
+  V(`<div class="grid g3" style="margin-bottom:16px"><div class="kpi"><div class="mt">Index-linked contracts</div><div class="mv">${linked.length}</div><div class="ms">of ${contracts.filter(c=>c.status!=='Expired').length} active</div></div>
+    <div class="kpi"><div class="mt">Index-linked value</div><div class="mv">${fmtK(totIv)}</div><div class="ms">ACV exposed</div></div>
+    <div class="kpi pp"><div class="mt">Exposure @ +${mv}%</div><div class="mv">${fmtK(totExp)}</div><div class="ms">added annual cost</div></div></div>
+  <div class="card"><div class="formrow" style="margin-top:0"><label>Assumed index move <b style="color:var(--purple)">+${mv}%</b></label><input type="range" id="im" min="1" max="15" value="${mv}"><span class="psub" style="margin:0">your assumption — no external feed needed</span></div>
+    ${rows.map(r=>`<div class="vrow"><div class="av" style="background:var(--amber-bg);color:var(--amber)">∿</div><div style="flex:1"><div style="font-weight:700;font-size:13.5px">${esc(r.c.vendor)} <span class="badge b-soon">${r.c.indexType}</span></div><div style="font-size:12px;color:var(--muted)">ACV ${fmtK(r.c.acv)} · ${r.c.indexedShare}% index-linked</div></div><div style="text-align:right"><div style="font-weight:800">${fmtK(r.exp)}</div><div style="font-size:11px;color:var(--muted)">exposure</div></div></div>`).join('')}</div>`);
+  const e=document.getElementById('im');if(e)e.oninput=ev=>{STATE.indexMove=+ev.target.value;vIndex();};
+}
+/* ============ ACT ============ */
+function vAct(){
+  const opps=detect().filter(o=>o.status!=='recovered');
+  const cats=['Renegotiate contract','Consolidate suppliers & reduce leakage','Recover margin','Resolve commitment gaps'];
+  const icon={'Renegotiate contract':'🤝','Consolidate suppliers & reduce leakage':'🧭','Recover margin':'💰','Resolve commitment gaps':'🎯'};
+  const k=kpis(detect());
+  V(`<div class="grid g3" style="margin-bottom:18px">
+    <div class="kpi pp"><div class="mt">Actions to take</div><div class="mv">${opps.length}</div><div class="ms">worth ${fmtK(opps.reduce((t,o)=>t+o.impact,0))}</div></div>
+    <div class="kpi"><div class="mt">Recover now</div><div class="mv">${fmtK(k.recoverable)}</div><div class="ms">cash back</div></div>
+    <div class="kpi gg"><div class="mt">Recovered</div><div class="mv">${fmtK(k.recovered)}</div><div class="ms">marked done</div></div></div>
+  ${cats.map(cat=>{const list=opps.filter(o=>o.act===cat);if(!list.length)return '';return `<div class="sectlbl">${icon[cat]} ${cat} <span style="margin-left:auto;font-size:13px;color:var(--muted);font-weight:600">${fmtK(list.reduce((t,o)=>t+o.impact,0))}</span></div>
+    <div class="grid g2">${list.map((o,i)=>{const idx='A'+cats.indexOf(cat)+'_'+i;const cf=o.contractId?cById(o.contractId):null;return `<div class="card" style="padding:15px 17px;display:flex;flex-direction:column;gap:9px"><div style="display:flex;align-items:flex-start;gap:12px"><div class="icon ${o.bucket==='recovery'?'ic-rec':'ic-sav'}">${o.icon}</div><div style="flex:1;min-width:0"><div style="font-weight:750;font-size:14px">${o.type}</div><div style="font-size:12.5px;color:var(--muted)">${cf?esc(cf.vendor):esc(o.subject||'')}</div></div><div style="text-align:right"><div style="font-weight:800;font-size:18px">${fmtK(o.impact)}</div></div></div>
+      <div style="font-size:12.5px;color:#4a4660"><b>Do this:</b> ${esc(o.action)}</div>
+      <div class="linkrow">${cf?`<button class="btn sm p" data-draft="${esc(cf.vendor)}" data-dt="${o.bucket==='recovery'?'challenge':'reneg'}">✦ Draft with NirvanaI</button>`:'<button class="btn sm p" data-goopp="1">Review in Opportunities</button>'}<button class="btn sm" data-set="recovered" data-id="${o.id}">Mark done</button></div></div>`;}).join('')}</div>`;}).join('')||'<div class="empty">All actions complete 🎉</div>'}`);
+  document.querySelectorAll('button[data-draft]').forEach(b=>b.onclick=()=>draftDoc(b.dataset.draft,b.dataset.dt));
+  document.querySelectorAll('button[data-set]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.id]=b.dataset.set;render();});
+  document.querySelectorAll('button[data-goopp]').forEach(b=>b.onclick=()=>{STATE.current='opps';render();});
+}
+/* ============ MARGIN RECOVERY ============ */
+function vRecovery(){
+  const opps=detect().filter(o=>o.bucket==='recovery');const tot=opps.reduce((t,o)=>t+o.impact,0),done=opps.filter(o=>o.status==='recovered').reduce((t,o)=>t+o.impact,0);
+  const grp={};opps.forEach(o=>{const v=o.contractId?cById(o.contractId).vendor:o.subject;(grp[v]=grp[v]||{vendor:v,items:[],total:0}).items.push(o);grp[v].total+=o.impact;});
+  V(`<div class="grid g3" style="margin-bottom:16px"><div class="kpi pp"><div class="mt">Total recoverable</div><div class="mv">${fmtK(tot)}</div><div class="ms">${opps.length} items</div></div>
+    <div class="kpi gg"><div class="mt">Recovered</div><div class="mv">${fmtK(done)}</div><div class="ms">credited</div></div>
+    <div class="kpi"><div class="mt">Open recovery</div><div class="mv">${fmtK(tot-done)}</div><div class="ms">to chase</div></div></div>
+  ${Object.values(grp).sort((a,b)=>b.total-a.total).map(g=>`<div class="card" style="margin-bottom:14px"><div style="display:flex;align-items:center;gap:12px"><div class="av" style="width:42px;height:42px;background:var(--amber-bg);color:var(--amber)">${esc(g.vendor).slice(0,1)}</div><div style="flex:1"><div style="font-weight:750;font-size:15px">${esc(g.vendor)}</div><div style="font-size:12.5px;color:var(--muted)">${g.items.length} discrepanc${g.items.length>1?'ies':'y'} · ${fmt(g.total)} recoverable</div></div><button class="btn p" data-draft="${esc(g.vendor)}" data-dt="challenge">✦ Draft challenge letter</button></div>
+    ${g.items.map(o=>`<div class="vrow"><div class="icon ic-rec" style="width:34px;height:34px;font-size:16px;border-radius:10px">${o.icon}</div><div style="flex:1"><div style="font-weight:650;font-size:13px">${o.type}</div><div style="font-size:12px;color:var(--muted)">${o.rationale.replace(/<[^>]+>/g,'').slice(0,80)}…</div></div><div style="font-weight:800">${fmt(o.impact)}</div><button class="btn sm ${o.status==='recovered'?'g':''}" data-set="recovered" data-id="${o.id}">${o.status==='recovered'?'Recovered':'Mark'}</button></div>`).join('')}</div>`).join('')||'<div class="empty">No recoverable items.</div>'}`);
+  document.querySelectorAll('button[data-draft]').forEach(b=>b.onclick=()=>draftDoc(b.dataset.draft,'challenge'));
+  document.querySelectorAll('button[data-set]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.id]='recovered';render();});
+}
+/* ============ RENEWALS ============ */
+function vRenewals(){
+  const rows=contracts.filter(c=>c.status!=='Expired').map(c=>{const nd=new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000),dl=daysBetween(nd,ASOF());return{c,nd,dl,upl:c.acv*c.uplift/100,urg:dl<=0?'overdue':dl<=STATE.settings.lookahead?'soon':'ok'};}).sort((a,b)=>a.dl-b.dl);
+  const exp=rows.filter(r=>r.urg!=='ok').reduce((t,r)=>t+r.upl,0);
+  V(`<div class="grid g3" style="margin-bottom:16px"><div class="kpi"><div class="mt">In the window</div><div class="mv">${rows.filter(r=>r.urg!=='ok').length}</div><div class="ms">need attention</div></div>
+    <div class="kpi"><div class="mt">Auto-renewing</div><div class="mv">${rows.filter(r=>r.urg!=='ok'&&r.c.renewalType==='Auto-renewal').length}</div><div class="ms">act before deadline</div></div>
+    <div class="kpi pp"><div class="mt">Uplift at stake</div><div class="mv">${fmtK(exp)}</div><div class="ms">negotiable</div></div></div>
+  <div class="card" style="padding:8px 18px">${rows.map(r=>{const b=r.urg==='overdue'?'<span class="badge b-exp">Overdue</span>':r.urg==='soon'?'<span class="badge b-soon">Soon</span>':'<span class="badge b-ok">Later</span>';const days=r.dl<=0?`${Math.abs(r.dl)}d past notice`:`${r.dl}d to notice`;
+    return `<div class="vrow"><div class="av" style="background:${r.urg==='ok'?'var(--purple-xl)':'var(--amber-bg)'};color:${r.urg==='ok'?'var(--purple-d)':'var(--amber)'}">${r.c.renewalType==='Auto-renewal'?'🔁':'📅'}</div><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px">${esc(r.c.vendor)} ${b}</div><div style="font-size:12.5px;color:var(--muted)">Ends ${r.c.end} · ${r.c.renewalType} · ${days}</div></div><div style="text-align:right"><div style="font-weight:800">${r.c.uplift?fmtK(r.upl):'—'}</div><div style="font-size:11px;color:var(--muted)">uplift</div></div><button class="btn sm" data-draft="${esc(r.c.vendor)}">✦ Draft</button></div>`;}).join('')}</div>`);
+  document.querySelectorAll('button[data-draft]').forEach(b=>b.onclick=()=>draftDoc(b.dataset.draft,'reneg'));
+}
+/* ============ COMMITMENTS ============ */
+function vCommit(){
+  const cc=contracts.filter(c=>c.yearlyCommit!=null);
+  const totC=cc.reduce((t,c)=>t+c.yearlyCommit,0);const consumed=cc.reduce((t,c)=>t+Math.min(sum(byContract(c.id)),c.yearlyCommit),0);
+  const actualAll=cc.reduce((t,c)=>t+sum(byContract(c.id)),0);const remaining=Math.max(0,totC-consumed);
+  const compliant=cc.filter(c=>{const u=pct(sum(byContract(c.id)),c.yearlyCommit);return u>=85&&u<=110;}).length;
+  V(`<div class="grid g4" style="margin-bottom:16px">
+    <div class="kpi"><div class="mt">Total commitments</div><div class="mv">${fmtK(totC)}</div><div class="ms">${cc.length} contracts</div></div>
+    <div class="kpi"><div class="mt">Consumed</div><div class="mv">${fmtK(consumed)}</div><div class="ms">${pct(consumed,totC).toFixed(0)}% utilised</div></div>
+    <div class="kpi pp"><div class="mt">Remaining</div><div class="mv">${fmtK(remaining)}</div><div class="ms">unused commitment</div></div>
+    <div class="kpi gg"><div class="mt">Compliance</div><div class="mv">${pct(compliant,cc.length).toFixed(0)}%</div><div class="ms">within 85–110%</div></div></div>
+  <div class="grid g2">${cc.map(c=>{const a=sum(byContract(c.id)),u=pct(a,c.yearlyCommit),rem=c.yearlyCommit-a,vr=a-c.yearlyCommit;
+    const col=u>110?'var(--red)':u>=85?'var(--green)':'var(--amber)';const badge=u>110?'<span class="badge b-exp">Over-utilised</span>':u>=85?'<span class="badge b-ok">On track</span>':'<span class="badge b-soon">Under-utilised</span>';
+    return `<div class="card ccard"><div>${ring(Math.min(u,100),76,9,col)}</div><div style="flex:1;min-width:0"><div style="font-weight:750;font-size:14.5px">${esc(c.vendor)} ${badge}</div><div style="font-size:12px;color:var(--muted);margin:2px 0 8px">${c.category}</div>
+      <div style="display:flex;gap:16px;font-size:12.5px"><div><div style="color:var(--muted)">Commit</div><b>${fmtK(c.yearlyCommit)}</b></div><div><div style="color:var(--muted)">Consumed</div><b>${fmtK(a)}</b></div><div><div style="color:var(--muted)">Remaining</div><b>${fmtK(Math.max(0,rem))}</b></div><div><div style="color:var(--muted)">Variance</div><b style="color:${vr>0?'var(--red)':'var(--green)'}">${vr>0?'+':''}${fmtK(vr)}</b></div></div></div></div>`;}).join('')}</div>`);
+}
+/* ============ COMMITMENT CHECK (CCL) ============ */
+function vCCL(){
+  const c=STATE.ccl;const exp=s=>c.value*(c.indexShare/100)*(s/100);const e5=exp(5),e10=exp(10),e15=exp(15);
+  let verdict,vc,vx;if(e5>c.tolerance){verdict='BLOCK';vc='v-blk';vx=`Even a 5% adverse move (${fmt(e5)}) breaches the ${fmt(c.tolerance)} tolerance. Renegotiate indexation or add a cap before signing.`;}
+  else if(e15>c.tolerance){verdict='CONDITION';vc='v-con';vx=`Resilient to small moves, but a 15% move (${fmt(e15)}) breaches tolerance. Approve only with an index cap.`;}
+  else{verdict='APPROVE';vc='v-app';vx=`Exposure stays within ${fmt(c.tolerance)} even at +15% (${fmt(e15)}). Safe to commit.`;}
+  V(`<div class="grid g2"><div class="card"><div class="sectlbl" style="margin:0 0 6px">Proposed commitment</div><div class="psub" style="margin:0 0 8px">Model the indexed exposure before the deal is signed.</div>
+    <div class="formrow"><label>Annual commitment value</label><input type="number" id="cv" value="${c.value}" step="10000" style="width:150px"></div>
+    <div class="formrow"><label>Term (years)</label><input type="number" id="ct" value="${c.term}" min="1" max="10" style="width:90px"></div>
+    <div class="formrow"><label>Index-linked share <b style="color:var(--purple)">${c.indexShare}%</b></label><input type="range" id="cis" min="0" max="100" value="${c.indexShare}"></div>
+    <div class="formrow"><label>Margin tolerance ($/yr)</label><input type="number" id="ctol" value="${c.tolerance}" step="5000" style="width:130px"></div></div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 6px">Margin exposure — stress test</div><div class="psub" style="margin:0 0 6px">Indexed portion = ${fmt(c.value*c.indexShare/100)} of ${fmt(c.value)}.</div>
+      ${bars([['+5% move',e5],['+10% move',e10],['+15% move',e15]],'a')}
+      <div class="verdict ${vc}">${verdict==='APPROVE'?'✓':verdict==='CONDITION'?'▲':'✕'} ${verdict}</div><div class="psub" style="margin:0">${vx}</div></div></div>`);
+  const set=(id,fn)=>{const e=document.getElementById(id);if(e)e.oninput=ev=>{fn(ev.target.value);vCCL();};};
+  set('cv',v=>c.value=+v||0);set('ct',v=>c.term=+v||1);set('cis',v=>c.indexShare=+v);set('ctol',v=>c.tolerance=+v||0);
+}
+/* ============ INTELLIGENCE (NirvanaI) ============ */
+function vIntel(){
+  const opps=detect(),k=kpis(opps);
+  const anomalies=opps.filter(o=>['Duplicate invoice','Spend after expiry'].includes(o.type));
+  const sugg=['Where can I save the most?','What auto-renews soon?','How much spend is off-contract?',"What's recoverable right now?",'Which suppliers should we consolidate?'];
+  V(`<div class="card hero" style="margin-bottom:18px"><div class="lbl">✦ NirvanaI · your cost-intelligence copilot</div><div style="font-size:22px;font-weight:800;margin:8px 0 4px">Ask anything about your spend & contracts</div>
+    <div class="sub">Grounded in your own data — every answer cites the numbers behind it.</div>
+    <div class="chips">${sugg.map(s=>`<div class="hchip" style="cursor:pointer" data-ask="${esc(s)}">${s}</div>`).join('')}</div></div>
+  <div class="grid g3" style="margin-bottom:6px"><div class="kpi pp"><div class="mt">Findings</div><div class="mv">${opps.length}</div><div class="ms">opportunities detected</div></div>
+    <div class="kpi"><div class="mt">Anomalies</div><div class="mv">${anomalies.length}</div><div class="ms">duplicates & post-expiry</div></div>
+    <div class="kpi"><div class="mt">Recommended value</div><div class="mv">${fmtK(k.identified)}</div><div class="ms">across all findings</div></div></div>
+  <div class="sectlbl">🔍 AI findings & anomalies</div>
+  ${anomalies.map(o=>`<div class="find"><div class="fi" style="background:var(--red-bg);color:var(--red)">${o.icon}</div><div style="align-self:center"><div class="ft">${o.type} — ${esc(o.subject||'')}</div><div class="fd">${o.rationale}</div></div><div style="align-self:center;font-weight:800;margin-left:auto">${fmtK(o.impact)}</div></div>`).join('')}
+  <div class="sectlbl">💡 Top recommendations</div>
+  ${opps.slice(0,4).map(o=>`<div class="find"><div class="fi">${o.icon}</div><div style="align-self:center;flex:1"><div class="ft">${o.act} — ${esc(o.subject||'')}</div><div class="fd">${esc(o.action)}</div></div><div style="align-self:center;font-weight:800">${fmtK(o.impact)}</div></div>`).join('')}`);
+  document.querySelectorAll('[data-ask]').forEach(e=>e.onclick=()=>{STATE.chat.open=true;STATE.chat.log.push({q:e.dataset.ask,a:answer(e.dataset.ask)});renderChat();});
+}
+/* ============ PORTFOLIO ============ */
+function vPortfolio(){
+  const opps=detect(),k=kpis(opps);const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  const ent={};spend.forEach(s=>{const e=entityOf(s);(ent[e]=ent[e]||{entity:e,spend:0,matched:0,contracts:new Set(),opp:0}).spend+=s.amount;if(s.contractId){ent[e].matched+=s.amount;ent[e].contracts.add(s.contractId);}});
+  contracts.forEach(c=>{if(ent[c.entity])ent[c.entity].opp+=(oppByC[c.id]||0);});
+  const rows=Object.values(ent).sort((a,b)=>b.spend-a.spend);
+  const invCount=new Set(spend.map(s=>s.invoice)).size;const vendCount=new Set(spend.map(canonVendor)).size;
+  const byL1={};spend.forEach(s=>byL1[l1Of(catOf(s))]=(byL1[l1Of(catOf(s))]||0)+s.amount);
+  const segs=Object.entries(byL1).sort((a,b)=>b[1]-a[1]).map(([n,v],i)=>({label:n,value:v,color:CATCOL[i%CATCOL.length]}));
+  V(`<div class="grid g4" style="margin-bottom:16px"><div class="kpi"><div class="mt">Total spend</div><div class="mv">${fmtK(k.total)}</div><div class="ms">${spend.length} transactions</div></div>
+    <div class="kpi"><div class="mt">Contracts</div><div class="mv">${contracts.length}</div><div class="ms">${contracts.filter(c=>c.status==='Active').length} active</div></div>
+    <div class="kpi"><div class="mt">Invoices</div><div class="mv">${invCount}</div><div class="ms">${vendCount} vendors</div></div>
+    <div class="kpi pp"><div class="mt">Identified opportunity</div><div class="mv">${fmtK(k.identified)}</div><div class="ms">${pct(k.identified,k.total).toFixed(1)}% of spend</div></div></div>
+  <div class="grid g2"><div class="card"><div class="sectlbl" style="margin:0 0 10px">Spend by entity</div>${bars(rows.map(r=>[r.entity,r.spend]))}</div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 6px">Group spend mix</div><div style="display:flex;align-items:center;gap:18px;margin-top:8px"><div>${donut(segs,150,28)}</div><div style="flex:1">${segs.map(s=>`<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin:6px 0"><span class="dot" style="background:${s.color}"></span>${esc(s.label)}<b style="margin-left:auto">${fmtK(s.value)}</b></div>`).join('')}</div></div></div></div>
+  <div class="sectlbl">Entity scorecard</div>
+  <div class="grid g3">${rows.map(r=>`<div class="card"><div style="font-weight:750;font-size:15px">${esc(r.entity)}</div><div style="display:flex;align-items:center;gap:14px;margin-top:10px"><div>${ring(pct(r.matched,r.spend),64,8,'var(--green)')}</div><div style="font-size:12.5px"><div style="color:var(--muted)">Spend</div><b style="font-size:15px">${fmtK(r.spend)}</b><div style="color:var(--muted);margin-top:4px">Opportunity</div><b style="color:var(--purple-d)">${r.opp?fmtK(r.opp):'—'}</b></div></div><div style="font-size:12px;color:var(--muted);margin-top:8px">${r.contracts.size} contracts · ${pct(r.matched,r.spend).toFixed(0)}% under management</div></div>`).join('')}</div>`);
+}
+/* ============ DATA QUALITY ============ */
+function vQuality(){
+  const po=spend.filter(s=>s.method==='PO'),fz=spend.filter(s=>s.method.startsWith('Vendor')),un=spend.filter(s=>!s.contractId),tot=sum(spend);
+  const segs=[{label:'PO match',value:sum(po),color:'#0f9d58'},{label:'Vendor fuzzy',value:sum(fz),color:'#e07b1a'},{label:'Unmatched',value:sum(un),color:'#e0394b'}];
+  V(`<div class="grid g2"><div class="card"><div class="sectlbl" style="margin:0 0 10px">Match coverage</div><div style="display:flex;align-items:center;gap:20px"><div>${donut(segs,150,28)}</div><div style="flex:1">${segs.map(s=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;margin:8px 0"><span class="dot" style="background:${s.color}"></span>${s.label}<b style="margin-left:auto">${fmtK(s.value)}</b></div>`).join('')}</div></div><div class="psub" style="margin:12px 0 0">Every savings figure inherits the confidence of the link beneath it.</div></div>
+    <div class="card"><div class="sectlbl" style="margin:0 0 10px">🧭 Unmatched queue</div><div class="psub" style="margin:0 0 6px">No PO, no vendor match — surfaced, never hidden.</div>
+      ${un.map(s=>`<div class="vrow"><div style="flex:1"><b style="font-size:13px">${esc(s.vendor)}</b><div style="font-size:12px;color:var(--muted)">${s.id} · ${s.spendDate}</div></div><div style="font-weight:800">${fmt(s.amount)}</div></div>`).join('')}</div></div>
+  <div class="card" style="margin-top:16px"><div class="sectlbl" style="margin:0 0 10px">🟠 Fuzzy links to review</div>
+    ${fz.map(s=>`<div class="vrow"><div style="flex:1"><b style="font-size:13px">${esc(s.vendor)}</b> <span style="color:var(--muted)">→ ${esc(cById(s.contractId).vendor)}</span></div><span class="conf c-med">conf ${s.confidence.toFixed(2)}</span><div style="font-weight:800">${fmt(s.amount)}</div></div>`).join('')||'<div class="empty">No fuzzy links.</div>'}</div>`);
+}
+/* ============ SETTINGS ============ */
+function vSettings(){const s=STATE.settings;
+  V(`<div class="card" style="max-width:640px"><div class="sectlbl" style="margin:0 0 6px">Assumptions</div><div class="psub" style="margin:0 0 14px">Everything recalculates as you change these.</div>
+    <div class="formrow"><label>Maverick recapture rate <b style="color:var(--purple)">${Math.round(s.recapture*100)}%</b></label><input type="range" id="sr" min="1" max="25" value="${Math.round(s.recapture*100)}"></div>
+    <div class="formrow"><label>Flag unused commit above <b style="color:var(--purple)">${Math.round(s.unusedPct*100)}%</b></label><input type="range" id="su" min="5" max="40" value="${Math.round(s.unusedPct*100)}"></div>
+    <div class="formrow"><label>Flag overspend above <b style="color:var(--purple)">${Math.round(s.overspendPct*100)}%</b></label><input type="range" id="so" min="0" max="25" value="${Math.round(s.overspendPct*100)}"></div>
+    <div class="formrow"><label>Renewal look-ahead (days)</label><input type="number" id="sl" value="${s.lookahead}" step="15" style="width:120px"></div>
+    <div class="formrow"><label>As-of date</label><input type="date" id="sa" value="${s.asOf}"></div></div>`);
+  document.getElementById('sr').oninput=e=>{s.recapture=+e.target.value/100;render();};document.getElementById('su').oninput=e=>{s.unusedPct=+e.target.value/100;render();};
+  document.getElementById('so').oninput=e=>{s.overspendPct=+e.target.value/100;render();};document.getElementById('sl').oninput=e=>{s.lookahead=+e.target.value||0;render();};document.getElementById('sa').onchange=e=>{s.asOf=e.target.value;render();};
+}
+/* ============ NirvanaI chat ============ */
+function chatAsk(q){STATE.chat.log.push({q:q,a:answer(q)});renderChat();}
+function renderChat(){const root=document.getElementById('nirvana-root');if(!root)return;const c=STATE.chat;
+  if(!c.open){root.innerHTML='<button id="nv-launch" class="nv-launch" title="Ask NirvanaI">✦</button>';document.getElementById('nv-launch').onclick=()=>{c.open=true;renderChat();};return;}
+  const sugg=['Where can I save the most?','What auto-renews soon?','How much spend is off-contract?',"What's recoverable right now?"];
+  const body=c.log.length?'<div class="nv-msgs" id="nv-msgs">'+c.log.map(e=>'<div class="nv-q">'+esc(e.q)+'</div><div class="nv-a">'+e.a+'</div>').join('')+'</div>':'<div class="nv-hero"><div class="nv-word">NirvanaI</div><div class="nv-greet">How can I help you today?</div></div>'+sugg.map(s=>'<div class="nv-s" data-q="'+esc(s)+'">✦ '+s+'</div>').join('');
+  root.innerHTML='<div class="nv-panel"><div class="nv-head"><div class="nv-logo">NirvanaI</div><button class="nv-x" id="nv-close">✕</button></div><div class="nv-body">'+body+'</div><div class="nv-foot"><div class="nv-input"><input id="nv-in" placeholder="Ask anything about your spend…"><button id="nv-send">➤</button></div></div></div>';
+  document.getElementById('nv-close').onclick=()=>{c.open=false;renderChat();};
+  root.querySelectorAll('.nv-s').forEach(s=>s.onclick=()=>chatAsk(s.dataset.q));
+  const inp=document.getElementById('nv-in'),send=()=>{const v=inp.value.trim();if(v)chatAsk(v);};
+  document.getElementById('nv-send').onclick=send;inp.onkeydown=e=>{if(e.key==='Enter')send();};
+  const m=document.getElementById('nv-msgs');if(m)m.scrollTop=m.scrollHeight;inp.focus();
+}
+document.getElementById('askbtn').onclick=()=>{STATE.chat.open=true;renderChat();};
+render();renderChat();
+</script>
+</body>
+</html>

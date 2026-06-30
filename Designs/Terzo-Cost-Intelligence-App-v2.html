@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terzo Cost Intelligence v2</title>
+<style>
+  :root{
+    --purple:#6d28d9;--purple-d:#5b21b6;--purple-l:#ede9fe;--purple-xl:#f6f3fe;
+    --ink:#1e1b2e;--muted:#6b6880;--line:#e7e4f0;--bg:#f6f5fb;--card:#fff;
+    --green:#0f9d58;--green-bg:#e6f6ee;--amber:#b7791f;--amber-bg:#fdf3e3;--red:#d63d4f;--red-bg:#fdeaec;--blue:#2563eb;--blue-bg:#e8f0fe;
+    --shadow:0 1px 3px rgba(40,30,80,.07),0 8px 24px rgba(40,30,80,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+  .app{display:flex;min-height:100vh}
+  .side{width:228px;flex:none;background:#fff;border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:center;gap:9px;padding:4px 8px 14px}
+  .brand .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(150deg,var(--purple),#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+  .brand b{font-size:15px;letter-spacing:-.2px}.brand span{display:block;font-size:10.5px;color:var(--muted)}
+  nav a{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:9px;color:#46435a;text-decoration:none;font-size:13px;font-weight:550;cursor:pointer;margin-bottom:1px}
+  nav a .ico{width:17px;text-align:center;opacity:.85}
+  nav a:hover{background:var(--purple-xl)}nav a.active{background:var(--purple);color:#fff}
+  nav .grouplbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.6px;color:#a7a3b8;font-weight:700;padding:12px 11px 4px}
+  nav a .ct{margin-left:auto;font-size:10px;background:var(--purple-l);color:var(--purple-d);border-radius:10px;padding:1px 7px;font-weight:700}
+  nav a.active .ct{background:rgba(255,255,255,.25);color:#fff}
+  .main{flex:1;min-width:0;padding:20px 26px 60px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+  .top h1{margin:0;font-size:21px;letter-spacing:-.3px}.top p{margin:3px 0 0;color:var(--muted);font-size:13px;max-width:660px}
+  .top .asof{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}.top .asof b{color:var(--ink)}
+  .kpis{display:grid;gap:12px;margin-bottom:16px}
+  .k5{grid-template-columns:repeat(5,1fr)}.k4{grid-template-columns:repeat(4,1fr)}.k3{grid-template-columns:repeat(3,1fr)}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 14px;box-shadow:var(--shadow)}
+  .kpi .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .kpi .v{font-size:22px;font-weight:750;margin-top:5px;letter-spacing:-.5px}.kpi .s{font-size:11px;color:var(--muted);margin-top:2px}
+  .kpi.hl{background:linear-gradient(160deg,var(--purple),var(--purple-d));border:none;color:#fff}.kpi.hl .l,.kpi.hl .s{color:#e9e2fb}
+  .kpi.gr{background:linear-gradient(160deg,#0f9d58,#0c7d46);border:none;color:#fff}.kpi.gr .l,.kpi.gr .s{color:#dcf3e6}
+  .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);padding:16px 17px;margin-bottom:16px}
+  .panel h2{font-size:14px;margin:0 0 2px;letter-spacing:-.2px}.panel .sub{font-size:12px;color:var(--muted);margin:0 0 13px}
+  .bar{display:flex;align-items:center;gap:9px;margin:8px 0}
+  .bar .name{width:150px;font-size:12px;flex:none;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .track{flex:1;background:#f0eef8;border-radius:6px;height:17px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--purple),#8b5cf6)}
+  .bar .fill.g{background:linear-gradient(90deg,#0f9d58,#34d399)}.bar .fill.a{background:linear-gradient(90deg,#d97706,#f59e0b)}
+  .bar .amt{width:78px;flex:none;font-size:12px;font-weight:650}
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:left;padding:8px 9px;border-bottom:2px solid var(--line);font-weight:700}
+  th.r,td.r{text-align:right}
+  tbody tr.main-row{border-bottom:1px solid var(--line)}
+  tbody tr.clk{cursor:pointer}tbody tr.clk:hover{background:#faf9ff}
+  td{padding:9px;font-size:13px;vertical-align:middle}
+  .tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--purple-l);color:var(--purple-d);white-space:nowrap}
+  .tag.b{background:var(--blue-bg);color:var(--blue)}.tag.gy{background:#eee;color:#555}.tag.g{background:var(--green-bg);color:var(--green)}.tag.a{background:var(--amber-bg);color:var(--amber)}.tag.r{background:var(--red-bg);color:var(--red)}
+  .impact{font-weight:750}
+  .conf{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .c-high{background:var(--green-bg);color:var(--green)}.c-med{background:var(--amber-bg);color:var(--amber)}.c-low{background:var(--red-bg);color:var(--red)}
+  .st{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px}
+  .st-open{background:#eef;color:#4848a8}.st-prog{background:var(--amber-bg);color:var(--amber)}.st-rec{background:var(--green-bg);color:var(--green)}
+  .chev{color:var(--muted);font-size:11px;display:inline-block;transition:transform .15s}tr.open .chev{transform:rotate(90deg)}
+  tr.detail td{background:#faf9ff;padding:0}
+  .det{padding:6px 18px 18px 40px}.det .rat{font-size:13px;margin:10px 0 12px;color:#2c2840;max-width:760px}
+  .formula{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#1e1b2e;color:#d9d3f0;padding:11px 13px;border-radius:9px;white-space:pre-wrap;line-height:1.6}.formula b{color:#c4b5fd}
+  .action{margin-top:12px;background:var(--purple-xl);border:1px solid var(--purple-l);border-radius:9px;padding:11px 13px;font-size:12.5px}
+  .action .ah{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--purple-d);font-weight:700;margin-bottom:4px}
+  .ev{margin-top:13px}.ev .eh{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:6px}
+  .evt td,.evt th{font-size:11.5px;padding:5px 8px}.evt th{color:var(--muted);border-bottom:1px solid var(--line)}.evt td{border-bottom:1px solid #f0eef8}
+  .pill{font-size:10px;padding:1px 7px;border-radius:5px;font-weight:600}
+  .pill.po{background:var(--green-bg);color:var(--green)}.pill.fz{background:var(--amber-bg);color:var(--amber)}.pill.un{background:var(--red-bg);color:var(--red)}
+  .btn{font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;margin:0 7px 7px 0}
+  .btn:hover{background:#faf9ff}.btn.p{background:var(--purple);color:#fff;border-color:var(--purple)}.btn.p:hover{filter:brightness(1.06)}.btn.g{background:var(--green);color:#fff;border-color:var(--green)}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .filters input,.filters select{font-size:12.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .filters input[type=text]{min-width:180px}
+  .util{position:relative;background:#f0eef8;border-radius:5px;height:8px;width:84px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:7px}.util>i{position:absolute;left:0;top:0;height:100%;border-radius:5px}
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:9px;margin-bottom:8px;font-size:12.5px;border:1px solid var(--line)}.alert .ai{font-size:15px}
+  .alert.r{background:var(--red-bg);border-color:#f6cdd3}.alert.a{background:var(--amber-bg);border-color:#f3e2c2}.alert.b{background:var(--blue-bg);border-color:#cfe0fb}
+  .verdict{padding:14px 16px;border-radius:11px;font-weight:700;font-size:15px;margin:14px 0;display:flex;align-items:center;gap:10px}
+  .v-app{background:var(--green-bg);color:var(--green)}.v-con{background:var(--amber-bg);color:var(--amber)}.v-blk{background:var(--red-bg);color:var(--red)}
+  .formrow{display:flex;align-items:center;gap:12px;margin:10px 0;font-size:13px}.formrow label{width:230px;flex:none;color:#46435a}
+  .formrow input[type=number]{width:140px;padding:7px 10px;border:1px solid var(--line);border-radius:8px}.formrow input[type=range]{accent-color:var(--purple);width:200px}
+  .note{font-size:11.5px;color:var(--muted)}
+  .foot{margin-top:8px;font-size:11.5px;color:var(--muted);line-height:1.6}.foot b{color:var(--ink)}
+  h2.sec{font-size:15px;margin:20px 0 9px}
+  .sprint{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .week{background:#fff;border:1px solid var(--line);border-radius:11px;padding:12px}
+  .week h4{margin:0 0 3px;font-size:12.5px}.week .wt{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--purple-d);font-weight:700}
+  .week .wv{font-size:17px;font-weight:750;margin:4px 0}.week ul{margin:6px 0 0;padding-left:16px;font-size:11.5px;color:#46435a}.week li{margin:3px 0}
+  .chip{display:inline-block;font-size:12px;padding:7px 12px;border:1px solid var(--line);border-radius:20px;background:#fff;cursor:pointer;margin:0 7px 8px 0}
+  .chip:hover{background:var(--purple-xl);border-color:var(--purple-l)}.chip.dis{opacity:.5;cursor:not-allowed;background:#f4f3f8}
+  .qa{margin-top:6px}
+  .q{background:var(--purple);color:#fff;border-radius:12px 12px 2px 12px;padding:8px 12px;font-size:12.5px;margin:10px 0 4px auto;max-width:70%;width:fit-content}
+  .a{background:#fff;border:1px solid var(--line);border-radius:12px 12px 12px 2px;padding:10px 13px;font-size:12.5px;margin:0 auto 8px 0;max-width:82%;width:fit-content;box-shadow:var(--shadow)}
+  textarea.doc{width:100%;min-height:300px;border:1px solid var(--line);border-radius:10px;padding:13px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.55;color:#2c2840;resize:vertical}
+  select.sel{font-size:12.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;margin:0 8px 8px 0}
+  @media(max-width:1000px){.side{display:none}.grid2{grid-template-columns:1fr}.kpis.k5,.kpis.k4{grid-template-columns:repeat(2,1fr)}.sprint{grid-template-columns:repeat(2,1fr)}}
+  /* NirvanAI chatbot */
+  .nv-launch{position:fixed;right:22px;bottom:22px;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(150deg,#f59e0b,#d946ef);color:#fff;font-size:22px;box-shadow:0 8px 24px rgba(120,40,160,.35);z-index:50}
+  .nv-launch:hover{filter:brightness(1.07)}
+  .nv-panel{position:fixed;top:0;right:0;width:392px;max-width:96vw;height:100vh;background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(40,30,80,.16);z-index:60;display:flex;flex-direction:column}
+  .nv-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .nv-logo,.nv-word{font-weight:800;background:linear-gradient(90deg,#f59e0b,#d946ef,#6d28d9);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .nv-logo{font-size:18px}.nv-word{font-size:30px}
+  .nv-x{border:none;background:none;font-size:15px;color:var(--muted);cursor:pointer}
+  .nv-body{flex:1;overflow:auto;padding:18px}
+  .nv-hero{text-align:center;padding:34px 10px 16px}.nv-greet{color:var(--muted);margin-top:6px;font-size:14px}
+  .nv-sugg{margin-top:8px}
+  .nv-s{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:9px;font-size:13px;cursor:pointer}
+  .nv-s:hover{background:var(--purple-xl);border-color:var(--purple-l)}.nv-bell{font-size:13px}
+  .nv-msgs{display:flex;flex-direction:column}
+  .nv-q{align-self:flex-end;background:var(--purple);color:#fff;border-radius:12px 12px 2px 12px;padding:9px 12px;font-size:12.5px;margin:8px 0 4px;max-width:82%}
+  .nv-a{align-self:flex-start;background:#f6f5fb;border:1px solid var(--line);border-radius:12px 12px 12px 2px;padding:10px 13px;font-size:12.5px;margin:0 0 8px;max-width:90%;line-height:1.5}
+  .nv-foot{border-top:1px solid var(--line);padding:12px 14px}
+  .nv-ctx{display:flex;justify-content:space-between;background:var(--purple);color:#fff;border-radius:8px;padding:6px 11px;font-size:11.5px;margin-bottom:9px}
+  .nv-input{display:flex;gap:8px;align-items:center;border:1px solid var(--purple-l);border-radius:10px;padding:5px 6px 5px 12px}
+  .nv-input input{flex:1;border:none;outline:none;font-size:13px;background:none;color:var(--ink)}
+  #nv-send{border:none;background:var(--purple);color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;flex:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side"><div class="brand"><div class="logo">T</div><div><b>Terzo</b><span>Cost Intelligence v2</span></div></div><nav id="nav"></nav></aside>
+  <main class="main">
+    <div class="top"><div><h1 id="ptitle"></h1><p id="psub"></p></div><div class="asof">As-of <b id="asof"></b><br><span id="counts"></span></div></div>
+    <div id="view"></div>
+  </main>
+</div>
+<div id="nirvana-root"></div>
+<script>
+"use strict";
+/* ===================================================================
+   TERZO COST INTELLIGENCE v2 — first-party cost-intelligence engine with
+   Assessment, Margin Recovery, Indexation, NirvanAI and Portfolio
+   capabilities. No external benchmarks/telemetry. Synthetic data.
+   =================================================================== */
+const fmt=n=>'$'+Math.round(n).toLocaleString('en-US');
+const fmtK=n=>{n=Math.round(n);return n>=1e6?'$'+(n/1e6).toFixed(2)+'M':'$'+Math.round(n/100)/10+'k';};
+const pct=(a,b)=>b?(a/b*100):0;
+const daysBetween=(a,b)=>Math.round((a-b)/86400000);
+const d=s=>new Date(s+'T00:00:00');
+const esc=s=>(''+s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+const STATE={
+  current:'dashboard',
+  settings:{recapture:0.10,unusedPct:0.15,overspendPct:0.05,lookahead:90,asOf:'2026-06-19'},
+  statuses:{}, spendFilter:{q:'',cat:'',cc:'',match:''}, oppFilter:{type:'',status:'',min:0},
+  ccl:{value:500000,term:3,indexShare:40,tolerance:25000}, indexMove:5, chat:{open:false,log:[]},
+  copilot:{log:[],vendor:'Acme Cloud Services',doc:'Renegotiation email',text:''}
+};
+const ASOF=()=>d(STATE.settings.asOf);
+
+/* category L1 taxonomy */
+const L1={'Software / Cloud':'Technology','Software':'Technology','Telecom':'Technology','Hardware':'Technology','Professional Svcs':'Services','Security':'Services','Logistics':'Services','Facilities':'Facilities & Admin','Office':'Facilities & Admin'};
+const l1Of=c=>L1[c]||'Other';
+
+/* ---------------- CONTRACTS (+ entity, indexType, indexedShare) ---------------- */
+const contracts=[
+ {id:'C-1001',vendor:'Acme Cloud Services',category:'Software / Cloud',entity:'NA Corp',costCenter:'CC-IT-01',status:'Active',start:'2025-10-01',end:'2026-09-30',currency:'USD',acv:240000,tcv:480000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:7,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:240000,po:'PO-AC-001'},
+ {id:'C-1002',vendor:'Globex Telecom',category:'Telecom',entity:'EU GmbH',costCenter:'CC-NET-02',status:'Active',start:'2026-01-16',end:'2027-01-15',currency:'USD',acv:180000,tcv:540000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:3,indexType:'CPI-linked',indexedShare:60,yearlyCommit:180000,po:'PO-GX-010'},
+ {id:'C-1003',vendor:'Initech Consulting',category:'Professional Svcs',entity:'NA Corp',costCenter:'CC-OPS-03',status:'Active',start:'2025-08-01',end:'2026-07-31',currency:'USD',acv:300000,tcv:600000,paymentTermDays:60,renewalType:'Auto-renewal',renewalNoticeDays:30,uplift:5,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:null,po:'PO-IN-021'},
+ {id:'C-1004',vendor:'Umbrella Facilities',category:'Facilities',entity:'EU GmbH',costCenter:'CC-FAC-04',status:'Active',start:'2026-01-01',end:'2026-12-31',currency:'USD',acv:120000,tcv:360000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:10,indexType:'CPI-linked',indexedShare:80,yearlyCommit:120000,po:'PO-UM-033'},
+ {id:'C-1005',vendor:'Soylent Supplies',category:'Office',entity:'NA Corp',costCenter:'CC-ADM-05',status:'Active',start:'2026-04-01',end:'2027-03-31',currency:'USD',acv:90000,tcv:180000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:4,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:90000,po:'PO-SY-044'},
+ {id:'C-1006',vendor:'Wayne Security',category:'Security',entity:'NA Corp',costCenter:'CC-SEC-06',status:'Active',start:'2025-08-16',end:'2026-08-15',currency:'USD',acv:150000,tcv:300000,paymentTermDays:45,renewalType:'Auto-renewal',renewalNoticeDays:60,uplift:6,indexType:'CPI-linked',indexedShare:70,yearlyCommit:150000,po:'PO-WS-055'},
+ {id:'C-1007',vendor:'Stark Analytics',category:'Software',entity:'APAC Pte',costCenter:'CC-IT-01',status:'Active',start:'2025-07-01',end:'2027-06-30',currency:'USD',acv:210000,tcv:420000,paymentTermDays:45,renewalType:'Option to renew',renewalNoticeDays:90,uplift:5,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:210000,po:'PO-ST-066'},
+ {id:'C-1008',vendor:'Hooli Data',category:'Software / Cloud',entity:'NA Corp',costCenter:'CC-IT-01',status:'Active',start:'2025-11-01',end:'2026-10-31',currency:'USD',acv:264000,tcv:528000,paymentTermDays:60,renewalType:'Auto-renewal',renewalNoticeDays:90,uplift:8,indexType:'CPI-linked',indexedShare:90,yearlyCommit:264000,po:'PO-HL-077'},
+ {id:'C-1009',vendor:'Cyberdyne Hardware',category:'Hardware',entity:'NA Corp',costCenter:'CC-IT-01',status:'Expired',start:'2024-06-01',end:'2026-05-31',currency:'USD',acv:75000,tcv:150000,paymentTermDays:30,renewalType:'None',renewalNoticeDays:0,uplift:0,indexType:'None',indexedShare:0,yearlyCommit:null,po:'PO-CY-088'},
+ {id:'C-1010',vendor:'Vandelay Logistics',category:'Logistics',entity:'EU GmbH',costCenter:'CC-OPS-03',status:'Active',start:'2026-03-01',end:'2027-02-28',currency:'USD',acv:130000,tcv:260000,paymentTermDays:30,renewalType:'Option to renew',renewalNoticeDays:60,uplift:3,indexType:'Fixed uplift',indexedShare:100,yearlyCommit:130000,po:'PO-VL-099'}
+];
+
+/* ---------------- SPEND ---------------- */
+let _n=0;const sid=()=>'S-'+String(++_n).padStart(3,'0');
+function gen(vendor,amount,count,po,gl,cc,m){const o=[];for(let i=0;i<count;i++)o.push({id:sid(),vendor,amount,currency:'USD',spendDate:`2026-${String(m+i).padStart(2,'0')}-12`,po,gl,costCenter:cc,source:'Coupa',invoice:'INV-'+(1000+_n)});return o;}
+let spend=[];
+spend=spend.concat(gen('Acme Cloud Services',45000,6,'PO-AC-001','044.01001.74222.20737','CC-IT-01',1));
+spend=spend.concat(gen('Globex Telecom',30000,4,'PO-GX-010','051.02002.61110.30122','CC-NET-02',1));
+spend=spend.concat(gen('Initech Consulting',60000,5,'PO-IN-021','070.03003.55400.40310','CC-OPS-03',1));
+spend=spend.concat(gen('Umbrella Facilities',35000,2,'PO-UM-033','088.04004.62220.50455','CC-FAC-04',1));
+spend=spend.concat(gen('Soylent Supplies',20000,3,'PO-SY-044','090.05005.61500.60511','CC-ADM-05',1));
+spend=spend.concat(gen('Wayne Security',29000,5,'PO-WS-055','066.06006.74100.70622','CC-SEC-06',1));
+spend=spend.concat(gen('Stark Analytics',50000,4,'PO-ST-066','044.01001.74222.20737','CC-IT-01',1));
+spend=spend.concat(gen('Hooli Data',50000,5,'PO-HL-077','044.01001.74900.20780','CC-IT-01',1));
+spend=spend.concat(gen('Vandelay Logistics',30000,4,'PO-VL-099','070.03003.55700.40330','CC-OPS-03',1));
+spend.push({id:sid(),vendor:'Globex Telecommunications',amount:30000,currency:'USD',spendDate:'2026-05-12',po:null,gl:'051.02002.61110.30122',costCenter:'CC-NET-02',source:'Oracle',invoice:'INV-GX-VAR-1'});
+spend.push({id:sid(),vendor:'Soylent Supplies',amount:11000,currency:'USD',spendDate:'2026-04-05',po:'PO-SY-044',gl:'090.05005.61500.60511',costCenter:'CC-ADM-05',source:'Coupa',invoice:'INV-SY-300'});
+spend.push({id:sid(),vendor:'Soylent Supplies',amount:11000,currency:'USD',spendDate:'2026-04-07',po:'PO-SY-044',gl:'090.05005.61500.60511',costCenter:'CC-ADM-05',source:'Coupa',invoice:'INV-SY-300'});
+spend.push({id:sid(),vendor:'Cyberdyne Hardware',amount:8000,currency:'USD',spendDate:'2026-06-05',po:'PO-CY-088',gl:'044.01001.71000.20790',costCenter:'CC-IT-01',source:'SAP',invoice:'INV-CY-901'});
+spend.push({id:sid(),vendor:'Cyberdyne Hardware',amount:6000,currency:'USD',spendDate:'2026-06-12',po:'PO-CY-088',gl:'044.01001.71000.20790',costCenter:'CC-IT-01',source:'SAP',invoice:'INV-CY-902'});
+[['Pied Piper Cloud',28000,'Software / Cloud'],['Dunder Mifflin',12000,'Office'],['Wonka Industries',9000,'Facilities'],['Gekko Capital',22000,'Professional Svcs'],['Bluth Construction',15000,'Facilities']].forEach(([v,a,c],i)=>{spend.push({id:sid(),vendor:v,amount:a,currency:'USD',spendDate:`2026-0${3+i%3}-18`,po:null,gl:'099.09009.69999.90999',costCenter:'CC-MISC-09',source:'Oracle',invoice:'INV-OFF-'+(700+i),category:c});});
+
+/* ---------------- MATCHING ---------------- */
+const STOP=new Set(['inc','llc','ltd','co','corp','company','group','the','holdings']);
+const norm=s=>s.toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(t=>t&&!STOP.has(t));
+function tokenSim(a,b){const A=norm(a),B=norm(b);if(!A.length||!B.length)return 0;let m=0;const u=new Array(B.length).fill(false);A.forEach(ta=>{for(let j=0;j<B.length;j++){if(u[j])continue;const tb=B[j];if(ta===tb||(ta.length>=4&&tb.length>=4&&(ta.startsWith(tb)||tb.startsWith(ta)))){u[j]=true;m++;break;}}});return m/Math.max(A.length,B.length);}
+function matchOne(s){
+  if(s.po){const c=contracts.find(c=>c.po===s.po);if(c)return{contractId:c.id,method:'PO',confidence:0.97};}
+  let best=null,sc=0;contracts.forEach(c=>{const ex=norm(s.vendor).join(' ')===norm(c.vendor).join(' ');const sim=ex?1:tokenSim(s.vendor,c.vendor);if(sim>sc){sc=sim;best=c;}});
+  if(best){if(norm(s.vendor).join(' ')===norm(best.vendor).join(' '))return{contractId:best.id,method:'Vendor (exact)',confidence:0.85};
+    if(sc>=0.99)return{contractId:best.id,method:'Vendor (fuzzy)',confidence:0.70};
+    if(sc>=0.5)return{contractId:best.id,method:'Vendor (fuzzy)',confidence:0.55};}
+  return{contractId:null,method:'Unmatched',confidence:0};
+}
+spend.forEach(s=>{const m=matchOne(s);s.contractId=m.contractId;s.method=m.method;s.confidence=m.confidence;});
+const cById=id=>contracts.find(c=>c.id===id);
+const byContract=id=>spend.filter(s=>s.contractId===id);
+const sum=a=>a.reduce((t,s)=>t+s.amount,0);
+const catOf=s=>s.category||(s.contractId?cById(s.contractId).category:'Uncategorised');
+const canonVendor=s=>s.contractId?cById(s.contractId).vendor:s.vendor;
+const entityOf=s=>s.contractId?cById(s.contractId).entity:'Unassigned';
+
+/* ---------------- DETECTION (with recovery/savings buckets) ---------------- */
+const RECOVERY=new Set(['Overspend vs ACV','Spend after expiry','Duplicate invoice']);
+function detect(){
+  const S=STATE.settings,R=S.recapture,opps=[];
+  const mav=spend.filter(s=>!s.contractId),mavExp=sum(mav);
+  if(mavExp>0)opps.push({id:'maverick',type:'Maverick spend',tag:'Off-contract',subject:`${mav.length} invoices · ${new Set(mav.map(s=>s.vendor)).size} vendors`,impact:mavExp*R,exposure:mavExp,confidence:0.78,conf:'med',
+    rationale:`${fmt(mavExp)} of spend across ${new Set(mav.map(s=>s.vendor)).size} vendors has no matching contract. Bringing it under contract typically recaptures 5–15%.`,
+    formula:`Exposure = Σ unmatched spend = <b>${fmt(mavExp)}</b>\nEst. savings = Exposure × recapture rate = ${fmt(mavExp)} × <b>${Math.round(R*100)}%</b> = <b>${fmt(mavExp*R)}</b>`,
+    action:`Consolidate the ${new Set(mav.map(s=>s.vendor)).size} off-contract vendors under negotiated agreements; draft an RFP for the largest category. Target ${Math.round(R*100)}% recapture = ${fmt(mavExp*R)}.`,evidence:mav});
+  contracts.forEach(c=>{if(c.yearlyCommit==null)return;const a=sum(byContract(c.id)),sf=c.yearlyCommit-a;if(sf>S.unusedPct*c.yearlyCommit)opps.push({id:'unused:'+c.id,type:'Unused commit',tag:'Unused commit',subject:c.vendor,contractId:c.id,impact:sf,confidence:0.9,conf:'high',
+    rationale:`Contract ${c.id} commits ${fmt(c.yearlyCommit)}/yr but only ${fmt(a)} was matched — ${fmt(sf)} (${Math.round(pct(sf,c.yearlyCommit))}%) unused.`,
+    formula:`Shortfall = Yearly Commit − Actual = ${fmt(c.yearlyCommit)} − ${fmt(a)} = <b>${fmt(sf)}</b>`,
+    action:`Renegotiate ${c.vendor} commitment toward ${fmt(a)} at renewal, or drive utilisation.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{const a=sum(byContract(c.id)),o=a-c.acv;if(o>S.overspendPct*c.acv)opps.push({id:'overspend:'+c.id,type:'Overspend vs ACV',tag:'Overspend',subject:c.vendor,contractId:c.id,impact:o,confidence:0.85,conf:'high',
+    rationale:`Matched spend ${fmt(a)} exceeds ACV ${fmt(c.acv)} by ${fmt(o)} (${Math.round(pct(o,c.acv))}%). Audit for off-rate or out-of-scope charges.`,
+    formula:`Overage = Actual − ACV = ${fmt(a)} − ${fmt(c.acv)} = <b>${fmt(o)}</b>`,
+    action:`Request a rate/line-item audit from ${c.vendor}; reconcile the ${fmt(o)} overage before next payment.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{if(c.renewalType!=='Auto-renewal')return;const nd=new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000),dl=daysBetween(nd,ASOF());if(dl<=S.lookahead){const uc=c.acv*c.uplift/100,nt=c.acv*(1+c.uplift/100),urg=dl<=0;
+    opps.push({id:'autorenew:'+c.id,type:'Silent auto-renewal',tag:'Auto-renewal',subject:c.vendor,contractId:c.id,impact:uc,confidence:0.9,conf:'high',
+    rationale:`Contract ${c.id} auto-renews. Notice deadline ${nd.toISOString().slice(0,10)} is ${urg?`<b style="color:#d63d4f">${Math.abs(dl)} days PAST</b>`:`${dl} days away`}. ${c.uplift}% uplift on ${fmt(c.acv)} ACV.`,
+    formula:`Negotiable uplift = ACV × uplift% = ${fmt(c.acv)} × <b>${c.uplift}%</b> = <b>${fmt(uc)}</b>\nNext-term value at risk = <b>${fmt(nt)}</b>`,
+    action:`Send ${c.vendor} renegotiation/non-renewal notice before ${nd.toISOString().slice(0,10)}; target removing the ${c.uplift}% uplift = ${fmt(uc)}.`,evidence:byContract(c.id)});}});
+  const af=new Set(opps.filter(o=>o.type==='Silent auto-renewal').map(o=>o.contractId));
+  contracts.forEach(c=>{if(c.uplift<=0||af.has(c.id)||c.status==='Expired')return;const uc=c.acv*c.uplift/100;
+    opps.push({id:'uplift:'+c.id,type:'Uplift creep',tag:'Uplift creep',subject:c.vendor,contractId:c.id,impact:uc,confidence:0.72,conf:'med',
+    rationale:`Contract ${c.id} carries a ${c.uplift}% renewal uplift on ${fmt(c.acv)} ACV (whether fair vs market needs external data — out of scope).`,
+    formula:`Annual uplift cost = ACV × uplift% = ${fmt(c.acv)} × <b>${c.uplift}%</b> = <b>${fmt(uc)}</b>`,
+    action:`Challenge the ${c.uplift}% uplift at the ${c.vendor} renewal; request a cap.`,evidence:byContract(c.id)});});
+  contracts.forEach(c=>{const post=byContract(c.id).filter(s=>d(s.spendDate)>d(c.end)),amt=sum(post);if(amt>0)opps.push({id:'expiry:'+c.id,type:'Spend after expiry',tag:'Post-expiry',subject:c.vendor,contractId:c.id,impact:amt,confidence:0.88,conf:'high',
+    rationale:`Contract ${c.id} expired ${c.end}, but ${fmt(amt)} posted after — off-contract exposure and compliance gap.`,
+    formula:`Post-expiry = Σ spend where date > End (${c.end}) = ${post.map(s=>fmt(s.amount)).join(' + ')} = <b>${fmt(amt)}</b>`,
+    action:`Stop or re-paper ${c.vendor}; move ${fmt(amt)} onto a current agreement.`,evidence:post});});
+  const seen={};spend.forEach(s=>{(seen[s.invoice]=seen[s.invoice]||[]).push(s);});
+  Object.values(seen).forEach(g=>{if(g.length>1&&g.every(x=>x.amount===g[0].amount)){const rec=g[0].amount*(g.length-1);
+    opps.push({id:'dup:'+g[0].invoice,type:'Duplicate invoice',tag:'Duplicate',subject:g[0].vendor,contractId:g[0].contractId,impact:rec,confidence:0.82,conf:'high',
+    rationale:`Invoice ${g[0].invoice} (${fmt(g[0].amount)}) appears ${g.length} times — likely double payment.`,
+    formula:`Recoverable = amount × (occurrences − 1) = ${fmt(g[0].amount)} × ${g.length-1} = <b>${fmt(rec)}</b>`,
+    action:`Issue a debit memo to ${g[0].vendor} for duplicate ${g[0].invoice}; add 3-way-match control.`,evidence:g});}});
+  opps.forEach(o=>{o.status=STATE.statuses[o.id]||'open';o.score=o.impact*o.confidence;o.bucket=RECOVERY.has(o.type)?'recovery':'savings';});
+  opps.sort((a,b)=>b.score-a.score);
+  return opps;
+}
+function kpis(opps){
+  const total=sum(spend),matched=sum(spend.filter(s=>s.contractId)),po=sum(spend.filter(s=>s.method==='PO')),mav=sum(spend.filter(s=>!s.contractId));
+  const identified=opps.reduce((t,o)=>t+o.impact,0);
+  const recovered=opps.filter(o=>o.status==='recovered').reduce((t,o)=>t+o.impact,0);
+  const recoverable=opps.filter(o=>o.bucket==='recovery').reduce((t,o)=>t+o.impact,0);
+  const savings=opps.filter(o=>o.bucket==='savings').reduce((t,o)=>t+o.impact,0);
+  return {total,matched,po,mav,identified,recovered,recoverable,savings,oppCount:opps.length,
+    sum:pct(matched,total),compliance:pct(po,total),poCoverage:pct(spend.filter(s=>s.po).length,spend.length)};
+}
+
+/* ===================================================================== RENDER */
+const confCls=c=>c==='high'?'c-high':c==='med'?'c-med':'c-low';
+const confLbl=c=>c==='high'?'High':c==='med'?'Medium':'Low';
+const stCls=s=>s==='recovered'?'st-rec':s==='in_progress'?'st-prog':'st-open';
+const stLbl=s=>s==='recovered'?'Recovered':s==='in_progress'?'In progress':'Open';
+const pillCls=m=>m==='PO'?'po':m==='Unmatched'?'un':'fz';
+const barRows=(rows,cls)=>{const mx=Math.max(...rows.map(r=>r[1]),1);return rows.map(([n,v])=>`<div class="bar"><div class="name" title="${esc(n)}">${esc(n)}</div><div class="track"><div class="fill ${cls||''}" style="width:${Math.max(3,v/mx*100)}%"></div></div><div class="amt">${fmtK(v)}</div></div>`).join('');};
+
+const TABS=[
+ {id:'dashboard',name:'Dashboard',ico:'▦',grp:'Overview'},
+ {id:'assessment',name:'Opportunity Assessment',ico:'◎',grp:'Overview'},
+ {id:'opportunities',name:'Opportunities',ico:'☰',grp:'Overview'},
+ {id:'spend',name:'Spend Explorer',ico:'≣',grp:'Analyse'},
+ {id:'contracts',name:'Contracts',ico:'❒',grp:'Analyse'},
+ {id:'vendors',name:'Vendors',ico:'⌂',grp:'Analyse'},
+ {id:'indexation',name:'Indexation & Exposure',ico:'∿',grp:'Analyse'},
+ {id:'recovery',name:'Margin Recovery',ico:'⟲',grp:'Act'},
+ {id:'renewals',name:'Renewals',ico:'⟳',grp:'Act'},
+ {id:'commitment',name:'Commitment Check',ico:'⛉',grp:'Act'},
+ {id:'copilot',name:'NirvanAI',ico:'✦',grp:'Intelligence'},
+ {id:'portfolio',name:'Portfolio',ico:'◫',grp:'Intelligence'},
+ {id:'quality',name:'Data Quality',ico:'◑',grp:'System'},
+ {id:'settings',name:'Settings',ico:'⚙',grp:'System'}
+];
+const TITLES={
+ dashboard:['Dashboard','Margin leakage and savings across all spend and contracts — first-party data only.'],
+ assessment:['Opportunity Assessment','Opportunities ranked by impact, framed as a 4-week decision sprint.'],
+ opportunities:['Opportunities','Every detected opportunity with evidence, formula and a recommended action.'],
+ spend:['Spend Explorer','Slice spend by category taxonomy, vendor, cost centre and match status.'],
+ contracts:['Contracts','Contract register with terms, indexation, utilisation and linked opportunities.'],
+ vendors:['Vendors','Supplier rollup and consolidation candidates.'],
+ indexation:['Indexation & Exposure','Index/COLA-linked contracts and modelled exposure if indices rise.'],
+ recovery:['Margin Recovery','Past leakage packaged for supplier challenge — recoverable cash.'],
+ renewals:['Renewals','Upcoming renewals ranked by urgency, with uplift exposure.'],
+ commitment:['Commitment Check','Validate a commitment before it executes — stress-test margin exposure.'],
+ copilot:['NirvanAI','Ask the data, and generate negotiation documents from your contracts and spend.'],
+ portfolio:['Portfolio','Multi-entity rollup of spend, savings and recovery across the group.'],
+ quality:['Data Quality','Match confidence, the unmatched queue and vendor normalisation — nothing hidden.'],
+ settings:['Settings','Tune the assumptions and thresholds that drive every figure.']
+};
+function renderNav(){
+  const opps=detect();const c={opportunities:opps.filter(o=>o.status!=='recovered').length,recovery:opps.filter(o=>o.bucket==='recovery'&&o.status!=='recovered').length};
+  let h='',g='';TABS.forEach(t=>{if(t.grp!==g){h+=`<div class="grouplbl">${t.grp}</div>`;g=t.grp;}h+=`<a data-tab="${t.id}" class="${t.id===STATE.current?'active':''}"><span class="ico">${t.ico}</span>${t.name}${c[t.id]?`<span class="ct">${c[t.id]}</span>`:''}</a>`;});
+  document.getElementById('nav').innerHTML=h;
+  document.querySelectorAll('#nav a').forEach(a=>a.onclick=()=>{STATE.current=a.dataset.tab;render();});
+}
+function render(){
+  renderNav();const[t,s]=TITLES[STATE.current];
+  document.getElementById('ptitle').textContent=t;document.getElementById('psub').textContent=s;
+  document.getElementById('asof').textContent=STATE.settings.asOf;
+  document.getElementById('counts').textContent=`${contracts.length} contracts · ${spend.length} spend records`;
+  ({dashboard:vDash,assessment:vAssess,opportunities:vOpps,spend:vSpend,contracts:vContracts,vendors:vVendors,indexation:vIndex,recovery:vRecovery,renewals:vRenewals,commitment:vCCL,copilot:vCopilot,portfolio:vPortfolio,quality:vQuality,settings:vSettings}[STATE.current])();
+}
+const V=h=>document.getElementById('view').innerHTML=h;
+
+/* ---------- DASHBOARD ---------- */
+function vDash(){
+  const opps=detect(),k=kpis(opps);
+  const byType={};opps.forEach(o=>byType[o.type]=(byType[o.type]||0)+o.impact);
+  const alerts=[];
+  opps.filter(o=>o.type==='Silent auto-renewal').forEach(o=>alerts.push(['r','⏰',`<b>${o.subject}</b> auto-renews soon — ${fmt(o.impact)} uplift negotiable.`]));
+  opps.filter(o=>o.type==='Spend after expiry').forEach(o=>alerts.push(['a','⚠',`<b>${o.subject}</b>: ${fmt(o.impact)} spent after expiry.`]));
+  opps.filter(o=>o.type==='Duplicate invoice').forEach(o=>alerts.push(['b','↺',`Duplicate payment to <b>${o.subject}</b> — ${fmt(o.impact)} recoverable.`]));
+  V(`
+  <div class="kpis k5">
+    <div class="kpi"><div class="l">Total spend</div><div class="v">${fmtK(k.total)}</div><div class="s">${spend.length} records</div></div>
+    <div class="kpi"><div class="l">Spend under mgmt</div><div class="v">${k.sum.toFixed(0)}%</div><div class="s">${fmtK(k.matched)} on contract</div></div>
+    <div class="kpi"><div class="l">Contract compliance</div><div class="v">${k.compliance.toFixed(0)}%</div><div class="s">PO-matched</div></div>
+    <div class="kpi hl"><div class="l">Identified opportunity</div><div class="v">${fmtK(k.identified)}</div><div class="s">${pct(k.identified,k.total).toFixed(1)}% of spend</div></div>
+    <div class="kpi gr"><div class="l">Recovered to date</div><div class="v">${fmtK(k.recovered)}</div><div class="s">marked recovered</div></div>
+  </div>
+  <div class="kpis k3">
+    <div class="kpi"><div class="l">Future savings (pipeline)</div><div class="v">${fmtK(k.savings)}</div><div class="s">renewals, commits, maverick</div></div>
+    <div class="kpi"><div class="l">Recoverable now</div><div class="v">${fmtK(k.recoverable)}</div><div class="s">duplicates, overspend, post-expiry</div></div>
+    <div class="kpi"><div class="l">PO coverage</div><div class="v">${k.poCoverage.toFixed(0)}%</div><div class="s">records with a PO</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Opportunity by type</h2><p class="sub">Addressable value per detection rule.</p>${barRows(Object.entries(byType).sort((a,b)=>b[1]-a[1]))}</div>
+    <div class="panel"><h2>Alerts</h2><p class="sub">Time-sensitive items.</p>${alerts.length?alerts.map(a=>`<div class="alert ${a[0]}"><span class="ai">${a[1]}</span><span>${a[2]}</span></div>`).join(''):'<div class="note">No active alerts.</div>'}</div>
+  </div>
+  <div class="foot"><b>Scope:</b> all figures derive from spend + contracts + linkage only — no market benchmarks or usage telemetry. Synthetic data.</div>`);
+}
+
+/* ---------- OPPORTUNITY ASSESSMENT (EBITDA + sprint) ---------- */
+function vAssess(){
+  const opps=detect(),k=kpis(opps);
+  const top=opps.slice(0,5);
+  // 4-week decision sprint buckets
+  const wk=[
+    {t:'Week 1',h:'Recover cash',f:o=>o.bucket==='recovery'},
+    {t:'Week 2',h:'Stop auto-renewals',f:o=>o.type==='Silent auto-renewal'},
+    {t:'Week 3',h:'Consolidate & audit',f:o=>o.type==='Maverick spend'},
+    {t:'Week 4',h:'Right-size & cap',f:o=>o.type==='Unused commit'||o.type==='Uplift creep'}
+  ];
+  const used=new Set();
+  const weeks=wk.map(w=>{const items=opps.filter(o=>!used.has(o.id)&&w.f(o));items.forEach(o=>used.add(o.id));return{...w,items,val:items.reduce((t,o)=>t+o.impact,0)};});
+  V(`
+  <div class="kpis k4">
+    <div class="kpi hl"><div class="l">Total EBITDA impact</div><div class="v">${fmtK(k.identified)}</div><div class="s">${pct(k.identified,k.total).toFixed(1)}% of spend</div></div>
+    <div class="kpi"><div class="l">Quick recovery</div><div class="v">${fmtK(k.recoverable)}</div><div class="s">cash back, &lt;30 days</div></div>
+    <div class="kpi"><div class="l">Annual savings</div><div class="v">${fmtK(k.savings)}</div><div class="s">recurring</div></div>
+    <div class="kpi"><div class="l">Opportunities</div><div class="v">${k.oppCount}</div><div class="s">ranked & sequenced</div></div>
+  </div>
+  <div class="panel"><h2>Act first — top 5 by impact × confidence</h2><p class="sub">Where to prioritise to realise the most, fastest.</p>
+    <table><thead><tr><th>#</th><th>Opportunity</th><th>Vendor</th><th>Bucket</th><th class="r">$ Impact</th><th>Confidence</th></tr></thead><tbody>
+    ${top.map((o,i)=>`<tr class="main-row"><td>${i+1}</td><td><b>${o.type}</b></td><td>${o.contractId?esc(cById(o.contractId).vendor):'multiple'}</td><td><span class="tag ${o.bucket==='recovery'?'a':'g'}">${o.bucket==='recovery'?'Recovery':'Savings'}</span></td><td class="r impact">${fmt(o.impact)}</td><td><span class="conf ${confCls(o.conf)}">${confLbl(o.conf)}</span></td></tr>`).join('')}
+    </tbody></table></div>
+  <h2 class="sec">4-week decision sprint</h2>
+  <div class="sprint">
+    ${weeks.map(w=>`<div class="week"><div class="wt">${w.t}</div><h4>${w.h}</h4><div class="wv">${fmtK(w.val)}</div><ul>${w.items.length?w.items.map(o=>`<li>${esc(o.subject||o.type)} — ${fmt(o.impact)}</li>`).join(''):'<li class="note">No items</li>'}</ul></div>`).join('')}
+  </div>
+  <div class="foot"><b>Decision sprint:</b> opportunities ranked purely on first-party impact × confidence — no external EBITDA benchmark needed.</div>`);
+}
+
+/* ---------- OPPORTUNITIES ---------- */
+function vOpps(){
+  let opps=detect();const types=[...new Set(opps.map(o=>o.type))];const f=STATE.oppFilter;
+  let rows=opps.filter(o=>(!f.type||o.type===f.type)&&(!f.status||o.status===f.status)&&o.impact>=f.min);
+  V(`<div class="panel">
+    <div class="filters">
+      <select id="ftype"><option value="">All types</option>${types.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+      <select id="fstatus"><option value="">All statuses</option>${['open','in_progress','recovered'].map(s=>`<option value="${s}" ${f.status===s?'selected':''}>${stLbl(s)}</option>`).join('')}</select>
+      <select id="fmin"><option value="0">Any size</option><option value="10000" ${f.min==10000?'selected':''}>≥ $10k</option><option value="25000" ${f.min==25000?'selected':''}>≥ $25k</option></select>
+      <span class="note">${rows.length} shown · ${fmt(rows.reduce((t,o)=>t+o.impact,0))}</span>
+    </div>
+    <table><thead><tr><th>#</th><th>Opportunity</th><th>Vendor</th><th>Type</th><th class="r">$ Impact</th><th>Confidence</th><th>Status</th><th></th></tr></thead><tbody id="otb"></tbody></table></div>`);
+  const tb=document.getElementById('otb');
+  tb.innerHTML=rows.map((o,i)=>{
+    const ev=(o.evidence||[]).slice(0,8).map(s=>`<tr><td>${s.id}</td><td>${esc(s.vendor)}</td><td class="r">${fmt(s.amount)}</td><td>${s.spendDate}</td><td>${s.po||'<span style="color:#b9b6c8">—</span>'}</td><td><span class="pill ${pillCls(s.method)}">${s.method}${s.confidence?' '+s.confidence.toFixed(2):''}</span></td></tr>`).join('');
+    const cf=o.contractId?cById(o.contractId):null;
+    return `<tr class="main-row clk orow" data-i="${i}"><td>${i+1}</td><td><b>${o.type}</b><div style="font-size:11px;color:var(--muted)">${esc(o.subject||'')}</div></td><td>${cf?esc(cf.vendor):'<span style="color:var(--muted)">multiple</span>'}</td><td><span class="tag">${o.tag}</span></td><td class="r impact">${fmt(o.impact)}${o.exposure?`<div style="font-size:10px;color:var(--muted);font-weight:500">${fmt(o.exposure)} exp.</div>`:''}</td><td><span class="conf ${confCls(o.conf)}">${confLbl(o.conf)} ${o.confidence.toFixed(2)}</span></td><td><span class="st ${stCls(o.status)}">${stLbl(o.status)}</span></td><td><span class="chev">▶</span></td></tr>
+    <tr class="detail" id="od-${i}" style="display:none"><td colspan="8"><div class="det"><div class="rat">${o.rationale}</div><div class="formula">${o.formula}</div><div class="action"><div class="ah">✦ Recommended action</div>${esc(o.action)}</div>
+      ${cf?`<div class="ev"><div class="eh">Contract — ${cf.id}</div><table class="evt"><tr><th>ACV</th><th>Commit</th><th>End</th><th>Renewal</th><th>Uplift</th><th>Index</th></tr><tr><td>${fmt(cf.acv)}</td><td>${cf.yearlyCommit!=null?fmt(cf.yearlyCommit):'—'}</td><td>${cf.end}</td><td>${cf.renewalType}</td><td>${cf.uplift?cf.uplift+'%':'—'}</td><td>${cf.indexType}</td></tr></table></div>`:''}
+      <div class="ev"><div class="eh">Spend evidence (${(o.evidence||[]).length})</div><table class="evt"><tr><th>ID</th><th>Vendor</th><th class="r">Amount</th><th>Date</th><th>PO</th><th>Match</th></tr>${ev||'<tr><td colspan=6 class="note">—</td></tr>'}</table></div>
+      <div style="margin-top:14px"><button class="btn ${o.status==='in_progress'?'p':''}" data-set="in_progress" data-id="${o.id}">Mark in progress</button><button class="btn ${o.status==='recovered'?'g':''}" data-set="recovered" data-id="${o.id}">Mark recovered</button><button class="btn" data-set="open" data-id="${o.id}">Reopen</button></div>
+    </div></td></tr>`;}).join('')||'<tr><td colspan="8" class="note" style="padding:18px">No opportunities match.</td></tr>';
+  tb.querySelectorAll('tr.orow').forEach(tr=>tr.onclick=e=>{if(e.target.closest('button'))return;const i=tr.dataset.i,det=document.getElementById('od-'+i),op=det.style.display!=='none';det.style.display=op?'none':'table-row';tr.classList.toggle('open',!op);});
+  tb.querySelectorAll('button[data-set]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.id]=b.dataset.set;render();});
+  document.getElementById('ftype').onchange=e=>{f.type=e.target.value;vOpps();};
+  document.getElementById('fstatus').onchange=e=>{f.status=e.target.value;vOpps();};
+  document.getElementById('fmin').onchange=e=>{f.min=+e.target.value;vOpps();};
+}
+
+/* ---------- SPEND EXPLORER (+ taxonomy) ---------- */
+function vSpend(){
+  const f=STATE.spendFilter;const cats=[...new Set(spend.map(catOf))].sort();const ccs=[...new Set(spend.map(s=>s.costCenter))].sort();
+  let rows=spend.filter(s=>{if(f.q&&!s.vendor.toLowerCase().includes(f.q.toLowerCase()))return false;if(f.cat&&catOf(s)!==f.cat)return false;if(f.cc&&s.costCenter!==f.cc)return false;if(f.match==='matched'&&!s.contractId)return false;if(f.match==='unmatched'&&s.contractId)return false;return true;});
+  const tot=sum(rows),mt=sum(rows.filter(s=>s.contractId));
+  const byL1={};rows.forEach(s=>byL1[l1Of(catOf(s))]=(byL1[l1Of(catOf(s))]||0)+s.amount);
+  const byCat={};rows.forEach(s=>byCat[catOf(s)]=(byCat[catOf(s)]||0)+s.amount);
+  const byVen={};rows.forEach(s=>byVen[canonVendor(s)]=(byVen[canonVendor(s)]||0)+s.amount);
+  V(`
+  <div class="kpis k3">
+    <div class="kpi"><div class="l">Filtered spend</div><div class="v">${fmtK(tot)}</div><div class="s">${rows.length} records</div></div>
+    <div class="kpi"><div class="l">Matched</div><div class="v">${pct(mt,tot||1).toFixed(1)}%</div><div class="s">${fmtK(mt)}</div></div>
+    <div class="kpi"><div class="l">Vendors / categories</div><div class="v">${Object.keys(byVen).length} / ${Object.keys(byCat).length}</div><div class="s">in view</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h2>Spend taxonomy — Level 1</h2><p class="sub">Top-level category rollup (drill via the category filter).</p>${barRows(Object.entries(byL1).sort((a,b)=>b[1]-a[1]))}</div>
+    <div class="panel"><h2>By category (Level 2)</h2><p class="sub">Filtered view.</p>${barRows(Object.entries(byCat).sort((a,b)=>b[1]-a[1]),'a')}</div>
+  </div>
+  <div class="panel">
+    <div class="filters">
+      <input type="text" id="sq" placeholder="Search vendor…" value="${esc(f.q)}">
+      <select id="scat"><option value="">All categories</option>${cats.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+      <select id="scc"><option value="">All cost centres</option>${ccs.map(c=>`<option ${f.cc===c?'selected':''}>${c}</option>`).join('')}</select>
+      <select id="smatch"><option value="">All</option><option value="matched" ${f.match==='matched'?'selected':''}>Matched</option><option value="unmatched" ${f.match==='unmatched'?'selected':''}>Unmatched</option></select>
+    </div>
+    <table><thead><tr><th>ID</th><th>Vendor</th><th>L1</th><th>Category</th><th>Cost centre</th><th class="r">Amount</th><th>Date</th><th>PO</th><th>Match</th></tr></thead><tbody>
+    ${rows.sort((a,b)=>b.amount-a.amount).slice(0,60).map(s=>`<tr class="main-row"><td>${s.id}</td><td>${esc(s.vendor)}</td><td><span class="tag b">${l1Of(catOf(s))}</span></td><td>${catOf(s)}</td><td>${s.costCenter}</td><td class="r impact">${fmt(s.amount)}</td><td>${s.spendDate}</td><td>${s.po||'<span style="color:#b9b6c8">—</span>'}</td><td><span class="pill ${pillCls(s.method)}">${s.method}</span></td></tr>`).join('')}
+    </tbody></table>${rows.length>60?`<div class="note" style="margin-top:8px">Top 60 of ${rows.length} by amount.</div>`:''}
+  </div>`);
+  document.getElementById('sq').oninput=e=>{f.q=e.target.value;vSpend();document.getElementById('sq').focus();};
+  document.getElementById('scat').onchange=e=>{f.cat=e.target.value;vSpend();};
+  document.getElementById('scc').onchange=e=>{f.cc=e.target.value;vSpend();};
+  document.getElementById('smatch').onchange=e=>{f.match=e.target.value;vSpend();};
+}
+
+/* ---------- CONTRACTS ---------- */
+function vContracts(){
+  const opps=detect();const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  V(`<div class="panel"><table><thead><tr><th>ID</th><th>Vendor</th><th>Category</th><th>Entity</th><th class="r">ACV</th><th>Utilisation</th><th>End</th><th>Index</th><th class="r">Opp.</th><th></th></tr></thead><tbody id="ctb"></tbody></table></div>`);
+  const tb=document.getElementById('ctb');
+  tb.innerHTML=contracts.map((c,i)=>{const act=sum(byContract(c.id)),base=c.yearlyCommit||c.acv,u=pct(act,base),col=u>100?'var(--red)':u>=80?'var(--green)':'var(--amber)';
+    const ev=byContract(c.id).map(s=>`<tr><td>${s.id}</td><td class="r">${fmt(s.amount)}</td><td>${s.spendDate}</td><td>${s.po||'—'}</td><td><span class="pill ${pillCls(s.method)}">${s.method}</span></td></tr>`).join('');
+    return `<tr class="main-row clk crow" data-i="${i}"><td>${c.id}</td><td><b>${esc(c.vendor)}</b></td><td>${c.category}</td><td><span class="tag gy">${c.entity}</span></td><td class="r">${fmt(c.acv)}</td><td><span class="util"><i style="width:${Math.min(100,u)}%;background:${col}"></i></span>${u.toFixed(0)}%</td><td>${c.end}</td><td><span class="tag ${c.indexType==='None'?'gy':'a'}">${c.indexType}</span></td><td class="r impact">${oppByC[c.id]?fmt(oppByC[c.id]):'—'}</td><td><span class="chev">▶</span></td></tr>
+    <tr class="detail" id="cd-${i}" style="display:none"><td colspan="10"><div class="det"><table class="evt" style="max-width:760px"><tr><th>TCV</th><th>ACV</th><th>Commit</th><th>Term</th><th>Renewal</th><th>Notice</th><th>Uplift</th><th>Index share</th><th>Payment</th></tr><tr><td>${fmt(c.tcv)}</td><td>${fmt(c.acv)}</td><td>${c.yearlyCommit!=null?fmt(c.yearlyCommit):'—'}</td><td>${c.start}→${c.end}</td><td>${c.renewalType}</td><td>${c.renewalNoticeDays}d</td><td>${c.uplift?c.uplift+'%':'—'}</td><td>${c.indexedShare}%</td><td>Net ${c.paymentTermDays}</td></tr></table>
+      <div class="ev"><div class="eh">Linked spend (${byContract(c.id).length} · ${fmt(act)})</div><table class="evt"><tr><th>ID</th><th class="r">Amount</th><th>Date</th><th>PO</th><th>Match</th></tr>${ev||'<tr><td colspan=5 class="note">None</td></tr>'}</table></div></div></td></tr>`;}).join('');
+  tb.querySelectorAll('tr.crow').forEach(tr=>tr.onclick=()=>{const i=tr.dataset.i,det=document.getElementById('cd-'+i),op=det.style.display!=='none';det.style.display=op?'none':'table-row';tr.classList.toggle('open',!op);});
+}
+
+/* ---------- VENDORS ---------- */
+function vVendors(){
+  const opps=detect();const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  const map={};spend.forEach(s=>{const v=canonVendor(s);(map[v]=map[v]||{vendor:v,spend:0,recs:0,contracts:new Set(),cat:catOf(s),opp:0,matched:0}).spend+=s.amount;map[v].recs++;if(s.contractId){map[v].contracts.add(s.contractId);map[v].matched+=s.amount;}});
+  Object.values(map).forEach(v=>v.contracts.forEach(cid=>v.opp+=(oppByC[cid]||0)));
+  const rows=Object.values(map).sort((a,b)=>b.spend-a.spend);
+  const catVen={};Object.values(map).forEach(v=>{(catVen[v.cat]=catVen[v.cat]||new Set()).add(v.vendor);});
+  const consol=Object.entries(catVen).filter(([c,s])=>s.size>1).map(([c,s])=>[c,[...s]]);
+  V(`
+  <div class="panel"><h2>Consolidation candidates</h2><p class="sub">Categories served by more than one vendor.</p>
+    ${consol.length?`<table><thead><tr><th>Category</th><th>Vendors</th><th class="r">Combined spend</th></tr></thead><tbody>${consol.map(([c,vs])=>`<tr class="main-row"><td><b>${c}</b></td><td>${vs.map(esc).join(', ')} <span class="tag b">${vs.length}</span></td><td class="r impact">${fmt(vs.reduce((t,v)=>t+map[v].spend,0))}</td></tr>`).join('')}</tbody></table>`:'<div class="note">No multi-vendor categories.</div>'}</div>
+  <div class="panel"><h2>All vendors</h2><p class="sub">Canonical rollup (fuzzy variants folded into matched vendor).</p>
+    <table><thead><tr><th>Vendor</th><th>Category</th><th class="r">Spend</th><th class="r">Records</th><th class="r">Contracts</th><th>Match</th><th class="r">Opportunity</th></tr></thead><tbody>
+    ${rows.map(v=>`<tr class="main-row"><td><b>${esc(v.vendor)}</b></td><td>${v.cat}</td><td class="r impact">${fmt(v.spend)}</td><td class="r">${v.recs}</td><td class="r">${v.contracts.size||'<span style="color:var(--red)">0</span>'}</td><td><span class="conf ${v.contracts.size?'c-high':'c-low'}">${pct(v.matched,v.spend).toFixed(0)}%</span></td><td class="r">${v.opp?fmt(v.opp):'—'}</td></tr>`).join('')}</tbody></table></div>`);
+}
+
+/* ---------- INDEXATION & EXPOSURE ---------- */
+function vIndex(){
+  const mv=STATE.indexMove;const linked=contracts.filter(c=>c.indexType!=='None'&&c.status!=='Expired');
+  const rows=linked.map(c=>{const indexedVal=c.acv*c.indexedShare/100;return{c,indexedVal,exp:indexedVal*mv/100};});
+  const totIndexed=rows.reduce((t,r)=>t+r.indexedVal,0),totExp=rows.reduce((t,r)=>t+r.exp,0);
+  const byType={};rows.forEach(r=>byType[r.c.indexType]=(byType[r.c.indexType]||0)+r.indexedVal);
+  V(`
+  <div class="kpis k3">
+    <div class="kpi"><div class="l">Index-linked contracts</div><div class="v">${linked.length}</div><div class="s">of ${contracts.filter(c=>c.status!=='Expired').length} active</div></div>
+    <div class="kpi"><div class="l">Index-linked value</div><div class="v">${fmtK(totIndexed)}</div><div class="s">ACV exposed to indices</div></div>
+    <div class="kpi hl"><div class="l">Exposure @ +${mv}%</div><div class="v">${fmtK(totExp)}</div><div class="s">added annual cost</div></div>
+  </div>
+  <div class="panel"><div class="filters"><label class="note">Assumed index move</label><input type="range" id="imove" min="1" max="15" value="${mv}" style="accent-color:var(--purple)"><b style="color:var(--purple)">+${mv}%</b><span class="note">Index movement is your assumption — no external CPI feed needed.</span></div>
+    <table><thead><tr><th>Contract</th><th>Vendor</th><th>Index type</th><th class="r">ACV</th><th class="r">Index share</th><th class="r">Indexed value</th><th class="r">Exposure @ +${mv}%</th></tr></thead><tbody>
+    ${rows.sort((a,b)=>b.exp-a.exp).map(r=>`<tr class="main-row"><td>${r.c.id}</td><td><b>${esc(r.c.vendor)}</b></td><td><span class="tag a">${r.c.indexType}</span></td><td class="r">${fmt(r.c.acv)}</td><td class="r">${r.c.indexedShare}%</td><td class="r">${fmt(r.indexedVal)}</td><td class="r impact">${fmt(r.exp)}</td></tr>`).join('')}
+    <tr style="border-top:2px solid var(--line)"><td colspan="5"><b>Total</b></td><td class="r"><b>${fmt(totIndexed)}</b></td><td class="r impact"><b>${fmt(totExp)}</b></td></tr></tbody></table></div>
+  <div class="panel"><h2>Indexed value by clause type</h2><p class="sub">CPI-linked terms carry open-ended exposure; fixed uplifts are capped but compounding.</p>${barRows(Object.entries(byType).sort((a,b)=>b[1]-a[1]),'a')}</div>
+  <div class="foot"><b>Why this matters:</b> index/uplift terms are read straight from the contract record — the move % is a transparent assumption, not an external CPI feed.</div>`);
+  document.getElementById('imove').oninput=e=>{STATE.indexMove=+e.target.value;vIndex();};
+}
+
+/* ---------- MARGIN RECOVERY (audit packs) ---------- */
+function vRecovery(){
+  const opps=detect().filter(o=>o.bucket==='recovery');
+  const tot=opps.reduce((t,o)=>t+o.impact,0),done=opps.filter(o=>o.status==='recovered').reduce((t,o)=>t+o.impact,0);
+  // group by vendor
+  const grp={};opps.forEach(o=>{const v=o.contractId?cById(o.contractId).vendor:o.subject;(grp[v]=grp[v]||{vendor:v,items:[],total:0}).items.push(o);grp[v].total+=o.impact;});
+  V(`
+  <div class="kpis k3">
+    <div class="kpi hl"><div class="l">Total recoverable</div><div class="v">${fmtK(tot)}</div><div class="s">${opps.length} items</div></div>
+    <div class="kpi gr"><div class="l">Recovered</div><div class="v">${fmtK(done)}</div><div class="s">marked done</div></div>
+    <div class="kpi"><div class="l">Open recovery</div><div class="v">${fmtK(tot-done)}</div><div class="s">to chase</div></div>
+  </div>
+  ${Object.values(grp).sort((a,b)=>b.total-a.total).map(g=>`
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center"><div><h2>${esc(g.vendor)}</h2><p class="sub" style="margin:0">${g.items.length} discrepanc${g.items.length>1?'ies':'y'} · ${fmt(g.total)} recoverable</p></div><button class="btn p" data-pack="${esc(g.vendor)}">Draft challenge letter →</button></div>
+      <table style="margin-top:10px"><thead><tr><th>Type</th><th>Detail</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead><tbody>
+      ${g.items.map(o=>`<tr class="main-row"><td><span class="tag a">${o.tag}</span></td><td>${esc(o.subject||'')} <span class="note">— ${o.rationale.replace(/<[^>]+>/g,'').slice(0,90)}…</span></td><td class="r impact">${fmt(o.impact)}</td><td><span class="st ${stCls(o.status)}">${stLbl(o.status)}</span></td><td><button class="btn ${o.status==='recovered'?'g':''}" data-rec="${o.id}">${o.status==='recovered'?'Recovered':'Mark recovered'}</button></td></tr>`).join('')}
+      </tbody></table></div>`).join('')||'<div class="panel note">No recoverable items.</div>'}
+  <div class="foot"><b>Margin recovery:</b> transactions matched to contracted terms and packaged for supplier challenge. Generate the letter in NirvanAI.</div>`);
+  document.querySelectorAll('button[data-rec]').forEach(b=>b.onclick=()=>{STATE.statuses[b.dataset.rec]='recovered';render();});
+  document.querySelectorAll('button[data-pack]').forEach(b=>b.onclick=()=>{STATE.copilot.vendor=b.dataset.pack;STATE.copilot.doc='Supplier challenge letter';STATE.copilot.text=genDoc('Supplier challenge letter',b.dataset.pack);STATE.current='copilot';render();});
+}
+
+/* ---------- RENEWALS ---------- */
+function vRenewals(){
+  const rows=contracts.filter(c=>c.status!=='Expired').map(c=>{const nd=new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000),dl=daysBetween(nd,ASOF()),upl=c.acv*c.uplift/100;return{c,nd,dl,upl,urg:dl<=0?'overdue':dl<=STATE.settings.lookahead?'soon':'ok'};}).sort((a,b)=>a.dl-b.dl);
+  const exp=rows.filter(r=>r.urg!=='ok').reduce((t,r)=>t+r.upl,0);
+  V(`<div class="kpis k3">
+    <div class="kpi"><div class="l">Renewals in window</div><div class="v">${rows.filter(r=>r.urg!=='ok').length}</div><div class="s">${STATE.settings.lookahead}-day notice</div></div>
+    <div class="kpi"><div class="l">Auto-renew (window)</div><div class="v">${rows.filter(r=>r.urg!=='ok'&&r.c.renewalType==='Auto-renewal').length}</div><div class="s">act before deadline</div></div>
+    <div class="kpi hl"><div class="l">Uplift exposure</div><div class="v">${fmtK(exp)}</div><div class="s">negotiable</div></div></div>
+  <div class="panel"><h2>Renewal calendar</h2><p class="sub">Notice deadline = end − notice days. Sorted by urgency.</p>
+  <table><thead><tr><th>Status</th><th>Vendor</th><th>End</th><th>Notice deadline</th><th class="r">Days left</th><th>Renewal</th><th class="r">ACV</th><th class="r">Uplift exp.</th></tr></thead><tbody>
+  ${rows.map(r=>{const b=r.urg==='overdue'?'<span class="st" style="background:var(--red-bg);color:var(--red)">Overdue</span>':r.urg==='soon'?'<span class="st st-prog">Soon</span>':'<span class="st st-rec">OK</span>';return `<tr class="main-row"><td>${b}</td><td><b>${esc(r.c.vendor)}</b></td><td>${r.c.end}</td><td>${r.nd.toISOString().slice(0,10)}</td><td class="r" style="font-weight:700;color:${r.dl<=0?'var(--red)':r.urg==='soon'?'var(--amber)':'var(--muted)'}">${r.dl}</td><td><span class="tag ${r.c.renewalType==='Auto-renewal'?'':'gy'}">${r.c.renewalType}</span></td><td class="r">${fmt(r.c.acv)}</td><td class="r impact">${r.c.uplift?fmt(r.upl):'—'}</td></tr>`;}).join('')}</tbody></table></div>`);
+}
+
+/* ---------- COMMITMENT CHECK (CCL) ---------- */
+function vCCL(){
+  const c=STATE.ccl;const exp=s=>c.value*(c.indexShare/100)*(s/100);const e5=exp(5),e10=exp(10),e15=exp(15);
+  let verdict,vc,vexp;
+  if(e5>c.tolerance){verdict='BLOCK';vc='v-blk';vexp=`Even a 5% adverse move (${fmt(e5)}) breaches the ${fmt(c.tolerance)} tolerance. Renegotiate indexation or add a cap before signing.`;}
+  else if(e15>c.tolerance){verdict='CONDITION';vc='v-con';vexp=`Resilient to small moves, but a 15% move (${fmt(e15)}) breaches tolerance. Approve only with an index cap / price-protection clause.`;}
+  else{verdict='APPROVE';vc='v-app';vexp=`Exposure stays within ${fmt(c.tolerance)} even at +15% (${fmt(e15)}). Safe to commit.`;}
+  V(`<div class="grid2">
+    <div class="panel"><h2>Proposed commitment</h2><p class="sub">Model indexed exposure before the deal is signed.</p>
+      <div class="formrow"><label>Annual commitment value</label><input type="number" id="cv" value="${c.value}" step="10000"></div>
+      <div class="formrow"><label>Term (years)</label><input type="number" id="ct" value="${c.term}" min="1" max="10"></div>
+      <div class="formrow"><label>Index-linked share <span class="note">${c.indexShare}%</span></label><input type="range" id="cis" min="0" max="100" value="${c.indexShare}"></div>
+      <div class="formrow"><label>Margin tolerance ($/yr)</label><input type="number" id="ctol" value="${c.tolerance}" step="5000"></div>
+      <div class="note">Index-linked share and tolerance are your inputs — first-party assumptions, not an external price feed.</div></div>
+    <div class="panel"><h2>Margin exposure — stress test</h2><p class="sub">Indexed portion = ${fmt(c.value*c.indexShare/100)} of ${fmt(c.value)}.</p>
+      ${barRows([['+5% move',e5],['+10% move',e10],['+15% move',e15]],'a')}
+      <div class="verdict ${vc}" style="margin-top:16px">${verdict==='APPROVE'?'✓':verdict==='CONDITION'?'▲':'✕'} ${verdict}</div><div class="note">${vexp}</div>
+      <table class="evt" style="margin-top:14px"><tr><th>Scenario</th><th class="r">Annual</th><th class="r">Over ${c.term}y</th><th>vs tolerance</th></tr>
+      ${[['+5%',e5],['+10%',e10],['+15%',e15]].map(([l,e])=>`<tr><td>${l}</td><td class="r">${fmt(e)}</td><td class="r">${fmt(e*c.term)}</td><td>${e>c.tolerance?'<span class="conf c-low">Breach</span>':'<span class="conf c-high">Within</span>'}</td></tr>`).join('')}</table></div></div>
+  <div class="foot"><b>Pre-commitment control:</b> governs commitments before they execute, on first-party logic — no external index feed required.</div>`);
+  document.getElementById('cv').oninput=e=>{c.value=+e.target.value||0;vCCL();};
+  document.getElementById('ct').oninput=e=>{c.term=+e.target.value||1;vCCL();};
+  document.getElementById('cis').oninput=e=>{c.indexShare=+e.target.value;vCCL();};
+  document.getElementById('ctol').oninput=e=>{c.tolerance=+e.target.value||0;vCCL();};
+}
+
+/* ---------- COPILOT (ask + generate documents) ---------- */
+function answer(q){
+  q=(''+q).toLowerCase();
+  const opps=detect(),k=kpis(opps);
+  const inDays=n=>contracts.filter(c=>{const dd=daysBetween(d(c.end),ASOF());return dd>=0&&dd<=n;});
+  if(q.includes('save the most')){const t=opps.slice(0,3);return 'Your three highest-impact opportunities: '+t.map(o=>`<b>${o.type} — ${o.subject||''}</b> (${fmt(o.impact)})`).join('; ')+`. Combined ${fmt(t.reduce((a,o)=>a+o.impact,0))}.`;}
+  if(q.includes('auto-renew')){const t=opps.filter(o=>o.type==='Silent auto-renewal');return t.length?`${t.length} contract(s) auto-renew within the notice window: `+t.map(o=>`<b>${o.subject}</b> (${fmt(o.impact)} uplift)`).join(', ')+'. Act before each notice deadline.':'No auto-renewals in the current window.';}
+  if(q.includes('off-contract')){const m=opps.find(o=>o.id==='maverick');return m?`${fmt(m.exposure)} of spend is off-contract across ${m.subject}. Estimated ${fmt(m.impact)} recoverable at the current recapture rate.`:'No off-contract spend detected.';}
+  if(q.includes('consolidate')){const map={};spend.forEach(s=>{const c=catOf(s);(map[c]=map[c]||new Set()).add(canonVendor(s));});const m=Object.entries(map).filter(([c,s])=>s.size>1);return m.length?'Consolidation candidates: '+m.map(([c,s])=>`<b>${c}</b> (${s.size} vendors)`).join(', ')+'.':'No multi-vendor categories.';}
+  if(q.includes('recover')){return `${fmt(k.recoverable)} is recoverable right now — duplicates, post-expiry spend and overspend vs ACV. See the Margin Recovery tab to package supplier challenges.`;}
+  if(q.includes('renewal')||q.includes('renew alert')){const t=opps.filter(o=>o.type==='Silent auto-renewal'||o.type==='Uplift creep');const e=inDays(STATE.settings.lookahead);return `In the next ${STATE.settings.lookahead} days, ${e.length} contract(s) reach term and ${t.length} carry renewal-uplift exposure (${fmt(t.reduce((a,o)=>a+o.impact,0))} negotiable). Top priority: `+(t[0]?`<b>${t[0].subject}</b> (${fmt(t[0].impact)})`:'none')+'. See the Renewals tab.';}
+  if(q.includes('expir')){const e=inDays(90).sort((a,b)=>d(a.end)-d(b.end));return e.length?`${e.length} contract(s) expire within 90 days: `+e.map(c=>`<b>${c.vendor}</b> (${c.end})`).join(', ')+'.':'No contracts expire within 90 days.';}
+  if(q.includes('total contract value')||q.includes('tcv')){const tot=contracts.reduce((t,c)=>t+c.tcv,0);const top=[...contracts].sort((a,b)=>b.tcv-a.tcv).slice(0,3);return `Total contract value across ${contracts.length} contracts is ${fmt(tot)}. Largest: `+top.map(c=>`<b>${c.vendor}</b> (${fmt(c.tcv)})`).join(', ')+'.';}
+  if(q.includes('commit')){const cc=contracts.filter(x=>x.yearlyCommit!=null);const tot=cc.reduce((t,x)=>t+x.yearlyCommit,0);return cc.length?`${cc.length} contract(s) carry a yearly commit totalling ${fmt(tot)}: `+cc.map(x=>`<b>${x.vendor}</b> (${fmt(x.yearlyCommit)})`).join(', ')+'. Check Opportunities for under-utilised commits.':'No contracts with yearly commits.';}
+  return "I answer from your spend and contracts — try: renewal alerts, contracts expiring soon, total contract value, yearly commits, where you can save the most, or what's recoverable.";
+}
+function genDoc(type,vendor){
+  const c=contracts.find(x=>x.vendor===vendor);const opps=detect().filter(o=>c&&o.contractId===c.id);
+  const actual=c?sum(byContract(c.id)):sum(spend.filter(s=>canonVendor(s)===vendor));
+  const find=t=>opps.find(o=>o.type===t);const L=[];
+  const head=()=>{L.push('To: '+vendor+' — Account Management');L.push('From: Procurement, [Your Company]');L.push('Date: '+STATE.settings.asOf);if(c)L.push('Re: Contract '+c.id+' ('+c.category+')');L.push('');};
+  if(type==='Renegotiation email'){
+    head();L.push('Dear '+vendor+' team,');L.push('');
+    L.push('As part of our annual commercial review, we analysed our spend against '+(c?'contract '+c.id:'our agreement')+'. Key findings:');
+    if(c)L.push('• Annual contract value '+fmt(c.acv)+'; matched spend over the last 12 months '+fmt(actual)+(c.yearlyCommit?(' against a committed '+fmt(c.yearlyCommit)+' ('+Math.round(pct(actual,c.yearlyCommit))+'% utilised).'):'.'));
+    const un=find('Unused commit');if(un)L.push('• We are tracking '+fmt(un.impact)+' below committed volume and would like to right-size the commitment.');
+    const up=find('Uplift creep')||find('Silent auto-renewal');if(up&&c)L.push('• The '+c.uplift+'% renewal uplift ('+fmt(c.acv*c.uplift/100)+'/yr) is above our planning assumptions; we request a cap aligned to a fixed, agreed index.');
+    const ov=find('Overspend vs ACV');if(ov)L.push('• Billing of '+fmt(ov.impact)+' above ACV needs a line-item reconciliation.');
+    L.push('');L.push('We value the partnership and would like to align on revised terms ahead of the '+(c?c.end:'upcoming')+' renewal. Could we schedule a call in the next two weeks?');
+    L.push('');L.push('Best regards,');L.push('[Name], Procurement');
+  } else if(type==='Non-renewal notice'){
+    head();L.push('Dear '+vendor+',');L.push('');
+    const ar=find('Silent auto-renewal');const nd=c?new Date(d(c.end).getTime()-c.renewalNoticeDays*86400000).toISOString().slice(0,10):'[deadline]';
+    L.push('This letter constitutes formal notice that [Your Company] does not intend to allow '+(c?'contract '+c.id:'our agreement')+' to auto-renew on its current terms, effective prior to the notice deadline of '+nd+'.');
+    if(ar&&c)L.push('Our review identified an automatic '+c.uplift+'% uplift on the '+fmt(c.acv)+' ACV ('+fmt(c.acv*c.uplift/100)+'/yr) that we are not prepared to accept without renegotiation.');
+    L.push('');L.push('We remain open to continuing on revised commercial terms and welcome a proposal that reflects our current usage and a capped escalation. Absent agreement, this notice preserves our right to exit at term end.');
+    L.push('');L.push('Regards,');L.push('[Name], Procurement');
+  } else if(type==='Supplier challenge letter'){
+    head();L.push('Dear '+vendor+',');L.push('');
+    const rec=detect().filter(o=>o.bucket==='recovery'&&((c&&o.contractId===c.id)||o.subject===vendor));
+    const tot=rec.reduce((t,o)=>t+o.impact,0);
+    L.push('A reconciliation of invoices against '+(c?'contract '+c.id:'our agreement')+' identified the following discrepancies totalling '+fmt(tot)+', which we request be credited:');
+    rec.forEach(o=>L.push('• '+o.type+': '+fmt(o.impact)+' — '+o.rationale.replace(/<[^>]+>/g,'')));
+    if(!rec.length)L.push('• [No recovery items currently detected for this supplier.]');
+    L.push('');L.push('Please confirm the credit / refund within '+(c?c.paymentTermDays:30)+' days per our payment terms. Supporting invoice-level detail is attached.');
+    L.push('');L.push('Regards,');L.push('Accounts Payable, [Your Company]');
+  } else if(type==='RFP brief'){
+    const cat=c?c.category:'the category';const catSpend=sum(spend.filter(s=>catOf(s)===(c?c.category:'')));
+    L.push('RFP BRIEF — '+cat);L.push('Date: '+STATE.settings.asOf);L.push('');
+    L.push('Objective: competitively source '+cat+' spend (~'+fmt(catSpend||actual)+'/yr) to reduce cost and improve terms.');
+    L.push('Incumbent: '+vendor+(c?(' (contract '+c.id+', ACV '+fmt(c.acv)+', renews '+c.end+')'):'')+'.');
+    L.push('Scope: full category requirement; pricing on a fixed-rate card with capped, index-referenced escalation.');
+    L.push('Evaluation: 50% commercial, 30% capability/SLA, 20% implementation & risk.');
+    L.push('Targets: ≥'+Math.round(STATE.settings.recapture*100)+'% cost reduction vs. current run-rate; removal of auto-renewal; volume-tier discounts.');
+    L.push('Timeline: RFP issue → 2 wks responses → 2 wks evaluation → award. Total 4 weeks.');
+  } else if(type==='Supplier SWOT'){
+    L.push('SUPPLIER SWOT — '+vendor);L.push('Date: '+STATE.settings.asOf);L.push('');
+    L.push('STRENGTHS');L.push('• Incumbent with '+(c?'an active contract ('+c.id+')':'established spend')+'; annual spend '+fmt(actual)+'.');if(c)L.push('• Known terms: '+c.renewalType+', '+(c.uplift?c.uplift+'% uplift':'no uplift')+', Net '+c.paymentTermDays+'.');
+    L.push('WEAKNESSES');opps.forEach(o=>L.push('• '+o.type+' — '+fmt(o.impact)+'.'));if(!opps.length)L.push('• None detected from current data.');
+    L.push('OPPORTUNITIES');L.push('• Renegotiation / consolidation leverage; total identified value '+fmt(opps.reduce((t,o)=>t+o.impact,0))+'.');
+    L.push('THREATS');L.push('• '+(c&&c.renewalType==='Auto-renewal'?'Auto-renewal lock-in':'Switching cost')+(c&&c.uplift?'; compounding '+c.uplift+'% escalation':'')+'.');
+    L.push('• Market benchmark unknown (requires external data — out of scope).');
+  }
+  return L.join('\n');
+}
+function vCopilot(){
+  const cp=STATE.copilot;const vendors=contracts.map(c=>c.vendor);const docs=['Renegotiation email','Non-renewal notice','Supplier challenge letter','RFP brief','Supplier SWOT'];
+  const qs=['Where can I save the most?','What auto-renews in the next 90 days?','How much spend is off-contract?','Which vendors should we consolidate?','What is recoverable right now?'];
+  if(!cp.text)cp.text=genDoc(cp.doc,cp.vendor);
+  V(`
+  <div class="grid2">
+    <div class="panel"><h2>Ask the data</h2><p class="sub">Computed from your spend + contracts — not a chatbot guess.</p>
+      <div>${qs.map(q=>`<span class="chip" data-q="${esc(q)}">${q}</span>`).join('')}<span class="chip dis" title="Requires external benchmark data — out of scope">Are we paying above market?</span></div>
+      <div class="qa" id="qa">${cp.log.map(e=>`<div class="q">${esc(e.q)}</div><div class="a">${e.a}</div>`).join('')||'<div class="note">Pick a question to begin.</div>'}</div>
+    </div>
+    <div class="panel"><h2>Generate document</h2><p class="sub">AI-assisted drafting from your data. Review before sending.</p>
+      <select class="sel" id="cpv">${vendors.map(v=>`<option ${cp.vendor===v?'selected':''}>${esc(v)}</option>`).join('')}</select>
+      <select class="sel" id="cpd">${docs.map(dx=>`<option ${cp.doc===dx?'selected':''}>${dx}</option>`).join('')}</select>
+      <button class="btn p" id="cpg">Generate</button><button class="btn" id="cpc">Copy</button>
+      <textarea class="doc" id="cpt" spellcheck="false">${esc(cp.text)}</textarea>
+    </div>
+  </div>
+  <div class="foot"><b>NirvanAI</b> generates recommendations and document drafts deterministically from your first-party data — no external market intelligence.</div>`);
+  document.querySelectorAll('[data-q]').forEach(ch=>ch.onclick=()=>{const q=ch.dataset.q;cp.log.push({q,a:answer(q.toLowerCase())});vCopilot();});
+  document.getElementById('cpv').onchange=e=>{cp.vendor=e.target.value;cp.text=genDoc(cp.doc,cp.vendor);vCopilot();};
+  document.getElementById('cpd').onchange=e=>{cp.doc=e.target.value;cp.text=genDoc(cp.doc,cp.vendor);vCopilot();};
+  document.getElementById('cpg').onclick=()=>{cp.text=genDoc(cp.doc,cp.vendor);vCopilot();};
+  document.getElementById('cpt').oninput=e=>{cp.text=e.target.value;};
+  document.getElementById('cpc').onclick=()=>{const ta=document.getElementById('cpt');ta.select();try{navigator.clipboard.writeText(ta.value);}catch(e){document.execCommand&&document.execCommand('copy');}};
+}
+
+/* ---------- PORTFOLIO (multi-entity) ---------- */
+function vPortfolio(){
+  const opps=detect();const oppByC={};opps.forEach(o=>{if(o.contractId)oppByC[o.contractId]=(oppByC[o.contractId]||0)+o.impact;});
+  const ent={};
+  spend.forEach(s=>{const e=entityOf(s);(ent[e]=ent[e]||{entity:e,spend:0,matched:0,contracts:new Set(),opp:0}).spend+=s.amount;if(s.contractId){ent[e].matched+=s.amount;ent[e].contracts.add(s.contractId);}});
+  contracts.forEach(c=>{if(ent[c.entity])ent[c.entity].opp+=(oppByC[c.id]||0);});
+  const rows=Object.values(ent).sort((a,b)=>b.spend-a.spend);
+  const byEnt=rows.map(r=>[r.entity,r.spend]);
+  const byL1={};spend.forEach(s=>byL1[l1Of(catOf(s))]=(byL1[l1Of(catOf(s))]||0)+s.amount);
+  V(`
+  <div class="panel"><h2>Spend by entity</h2><p class="sub">Group-level rollup across legal entities.</p>${barRows(byEnt)}</div>
+  <div class="panel"><h2>Entity scorecard</h2><p class="sub">Spend under management and identified opportunity per entity.</p>
+    <table><thead><tr><th>Entity</th><th class="r">Spend</th><th class="r">SUM %</th><th class="r">Contracts</th><th class="r">Identified opp.</th><th class="r">Opp. % of spend</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr class="main-row"><td><b>${esc(r.entity)}</b></td><td class="r impact">${fmt(r.spend)}</td><td class="r"><span class="conf ${r.matched/r.spend>0.8?'c-high':'c-med'}">${pct(r.matched,r.spend).toFixed(0)}%</span></td><td class="r">${r.contracts.size}</td><td class="r">${r.opp?fmt(r.opp):'—'}</td><td class="r">${r.opp?pct(r.opp,r.spend).toFixed(1)+'%':'—'}</td></tr>`).join('')}</tbody></table></div>
+  <div class="panel"><h2>Group spend by Level-1 category</h2>${barRows(Object.entries(byL1).sort((a,b)=>b[1]-a[1]),'a')}</div>
+  <div class="foot"><b>Portfolio view:</b> consolidated, multi-entity visibility and control across the group, here by legal entity.</div>`);
+}
+
+/* ---------- DATA QUALITY ---------- */
+function vQuality(){
+  const po=spend.filter(s=>s.method==='PO'),fz=spend.filter(s=>s.method.startsWith('Vendor')),un=spend.filter(s=>!s.contractId),tot=sum(spend);
+  V(`<div class="panel"><h2>Match coverage</h2><p class="sub">Every savings figure inherits the confidence of the link beneath it.</p>
+    <div style="display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-bottom:10px">
+      <span style="background:var(--green);width:${pct(sum(po),tot)}%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${pct(sum(po),tot).toFixed(0)}%</span>
+      <span style="background:var(--amber);width:${pct(sum(fz),tot)}%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${pct(sum(fz),tot)>=6?pct(sum(fz),tot).toFixed(0)+'%':''}</span>
+      <span style="background:var(--red);width:${pct(sum(un),tot)}%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${pct(sum(un),tot)>=6?pct(sum(un),tot).toFixed(0)+'%':''}</span></div>
+    <table class="evt"><tr><th>Method</th><th class="r">Records</th><th class="r">Spend</th><th>Confidence</th></tr>
+    <tr><td>PO match</td><td class="r">${po.length}</td><td class="r">${fmt(sum(po))}</td><td><span class="conf c-high">0.97</span></td></tr>
+    <tr><td>Vendor fuzzy</td><td class="r">${fz.length}</td><td class="r">${fmt(sum(fz))}</td><td><span class="conf c-med">0.55–0.85</span></td></tr>
+    <tr><td>Unmatched</td><td class="r">${un.length}</td><td class="r">${fmt(sum(un))}</td><td><span class="conf c-low">0.00</span></td></tr></table></div>
+  <div class="grid2">
+    <div class="panel"><h2>Unmatched queue (maverick)</h2><p class="sub">No PO, no vendor match — surfaced, never hidden.</p><table class="evt"><tr><th>ID</th><th>Vendor</th><th class="r">Amount</th><th>Date</th></tr>${un.map(s=>`<tr><td>${s.id}</td><td>${esc(s.vendor)}</td><td class="r">${fmt(s.amount)}</td><td>${s.spendDate}</td></tr>`).join('')}</table></div>
+    <div class="panel"><h2>Fuzzy links to review</h2><p class="sub">Matched on vendor similarity, not PO.</p><table class="evt"><tr><th>ID</th><th>Spend vendor</th><th>→ Contract</th><th>Conf.</th></tr>${fz.map(s=>`<tr><td>${s.id}</td><td>${esc(s.vendor)}</td><td>${esc(cById(s.contractId).vendor)}</td><td><span class="conf c-med">${s.confidence.toFixed(2)}</span></td></tr>`).join('')||'<tr><td colspan=4 class="note">None</td></tr>'}</table></div>
+  </div>
+  <div class="foot"><b>Match accuracy is the biggest risk to every number.</b> Confidence is shown on every record; low-confidence and unmatched spend is queued for review, not silently scored.</div>`);
+}
+
+/* ---------- SETTINGS ---------- */
+function vSettings(){
+  const s=STATE.settings;
+  V(`<div class="panel" style="max-width:680px"><h2>Assumptions &amp; thresholds</h2><p class="sub">These drive every figure across the app.</p>
+    <div class="formrow"><label>Maverick recapture rate <span class="note">${Math.round(s.recapture*100)}%</span></label><input type="range" id="sr" min="1" max="25" value="${Math.round(s.recapture*100)}"></div>
+    <div class="formrow"><label>Unused-commit threshold <span class="note">${Math.round(s.unusedPct*100)}%</span></label><input type="range" id="su" min="5" max="40" value="${Math.round(s.unusedPct*100)}"></div>
+    <div class="formrow"><label>Overspend threshold <span class="note">${Math.round(s.overspendPct*100)}%</span></label><input type="range" id="so" min="0" max="25" value="${Math.round(s.overspendPct*100)}"></div>
+    <div class="formrow"><label>Renewal lookahead (days)</label><input type="number" id="sl" value="${s.lookahead}" step="15"></div>
+    <div class="formrow"><label>As-of date</label><input type="date" id="sa" value="${s.asOf}"></div>
+    <div class="note" style="margin-top:8px">Changing any value recomputes the whole model, including KPIs, opportunities and the sprint plan.</div></div>`);
+  document.getElementById('sr').oninput=e=>{s.recapture=+e.target.value/100;render();};
+  document.getElementById('su').oninput=e=>{s.unusedPct=+e.target.value/100;render();};
+  document.getElementById('so').oninput=e=>{s.overspendPct=+e.target.value/100;render();};
+  document.getElementById('sl').oninput=e=>{s.lookahead=+e.target.value||0;render();};
+  document.getElementById('sa').onchange=e=>{s.asOf=e.target.value;render();};
+}
+
+/* ---------- NIRVANAI CHATBOT (global, available on every tab) ---------- */
+function chatAsk(q){STATE.chat.log.push({q:q,a:answer(q)});renderChat();}
+function renderChat(){
+  const root=document.getElementById('nirvana-root');if(!root)return;const c=STATE.chat;
+  if(!c.open){root.innerHTML='<button id="nv-launch" class="nv-launch" title="Ask NirvanAI">✦</button>';document.getElementById('nv-launch').onclick=()=>{c.open=true;renderChat();};return;}
+  const sugg=['Review renewal alerts','Show contracts expiring this quarter','Show contracts with total contract value','Find contracts with yearly commits','Where can I save the most?','What is recoverable right now?'];
+  const body=c.log.length
+    ? '<div class="nv-msgs" id="nv-msgs">'+c.log.map(e=>'<div class="nv-q">'+esc(e.q)+'</div><div class="nv-a">'+e.a+'</div>').join('')+'</div>'
+    : '<div class="nv-hero"><div class="nv-word">NirvanAI</div><div class="nv-greet">How can I help you today?</div></div><div class="nv-sugg">'+sugg.map(s=>'<div class="nv-s" data-q="'+esc(s)+'"><span class="nv-bell">🔔</span>'+s+'</div>').join('')+'</div>';
+  root.innerHTML='<div class="nv-panel"><div class="nv-head"><div class="nv-logo">NirvanAI</div><button class="nv-x" id="nv-close">✕</button></div><div class="nv-body">'+body+'</div><div class="nv-foot"><div class="nv-ctx"><span>◎ Cost Intelligence</span><span>Mode: <b>Global</b></span></div><div class="nv-input"><input type="text" id="nv-in" placeholder="Ask NirvanAI anything…"><button id="nv-send">➤</button></div></div></div>';
+  document.getElementById('nv-close').onclick=()=>{c.open=false;renderChat();};
+  root.querySelectorAll('.nv-s').forEach(s=>s.onclick=()=>chatAsk(s.dataset.q));
+  const inp=document.getElementById('nv-in'),send=()=>{const v=inp.value.trim();if(v)chatAsk(v);};
+  document.getElementById('nv-send').onclick=send;inp.onkeydown=e=>{if(e.key==='Enter')send();};
+  const m=document.getElementById('nv-msgs');if(m)m.scrollTop=m.scrollHeight;inp.focus();
+}
+
+render();
+renderChat();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+# Full local dev stack for Terzo Cost Intelligence (Phase 0).
+#   docker compose -f infra/docker-compose.yml up -d
+#
+# NOTE: api/celery build from the REPO ROOT context (pyproject.toml lives there),
+# using apps/api/Dockerfile.
+name: terzo-cost-intelligence
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: terzo
+      POSTGRES_USER: terzo
+      POSTGRES_PASSWORD: dev
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U terzo"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24
+    ports: ["8123:8123", "9000:9000"]
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    volumes: ["chdata:/var/lib/clickhouse"]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel/config.yaml"]
+    volumes: ["./otel-collector.yaml:/etc/otel/config.yaml"]
+    ports: ["4317:4317", "4318:4318"]
+
+  mailhog:                                  # dev email sink (later notification testing)
+    image: mailhog/mailhog
+    ports: ["8025:8025"]
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql+asyncpg://terzo:dev@postgres:5432/terzo
+      REDIS_URL: redis://redis:6379/0
+      CLICKHOUSE_URL: http://clickhouse:8123
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:-test.us.auth0.com}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-https://api.terzo.ai}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-test}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-test}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PYTHONPATH: /app/apps/api
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    command: celery -A app.workers worker -l info -Q ingestion,matching,detection,default
+    environment:
+      DATABASE_URL: postgresql+asyncpg://terzo:dev@postgres:5432/terzo
+      REDIS_URL: redis://redis:6379/0
+      PYTHONPATH: /app/apps/api
+    depends_on:
+      redis: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    command: celery -A app.workers beat -l info
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      PYTHONPATH: /app/apps/api
+    depends_on:
+      redis: { condition: service_healthy }
+
+  web:
+    build:
+      context: ../apps/web
+    command: npm run dev
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8000/api/v1
+      AUTH0_SECRET: ${AUTH0_SECRET:-dev-secret-change-me}
+      AUTH0_BASE_URL: http://localhost:3000
+      AUTH0_ISSUER_BASE_URL: https://${AUTH0_DOMAIN:-test.us.auth0.com}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-test}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET:-test}
+    ports: ["3000:3000"]
+    depends_on: [api]
+
+volumes:
+  pgdata:
+  chdata:

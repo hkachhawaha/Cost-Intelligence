@@ -1,0 +1,64 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: terzo
+          POSTGRES_USER: terzo
+          POSTGRES_PASSWORD: dev
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U terzo" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://terzo:dev@localhost:5432/terzo
+      REDIS_URL: redis://localhost:6379/0
+      AUTH0_DOMAIN: test.us.auth0.com
+      AUTH0_AUDIENCE: https://api.terzo.ai
+      AUTH0_CLIENT_ID: test
+      AUTH0_CLIENT_SECRET: test
+      ENVIRONMENT: dev
+      RUN_DB_TESTS: "1"            # the RLS-isolation integration test is a required gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Install deps
+        run: uv sync --extra dev
+      - name: Lint
+        run: uv run ruff check apps/api
+      - name: Format check
+        run: uv run ruff format --check apps/api
+      - name: Typecheck
+        run: uv run mypy apps/api
+      - name: Migrate
+        run: uv run alembic upgrade head
+      - name: Tests (incl. RLS isolation — required gate)
+        run: uv run pytest apps/api -q --maxfail=1
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web lint
+      - run: pnpm --filter web typecheck
+      - run: pnpm --filter web build
+      - run: pnpm --filter web test

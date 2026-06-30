@@ -1,0 +1,69 @@
+[project]
+name = "terzo-cost-intelligence"
+version = "0.1.0"
+description = "Terzo Cost Intelligence — FastAPI backend (apps/api)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "sqlalchemy[asyncio]>=2.0.35",
+    "asyncpg>=0.29",
+    "psycopg[binary]>=3.2",                # sync driver for Alembic + integration tests
+    "alembic>=1.13",
+    "pgvector>=0.3",
+    "python-jose[cryptography]>=3.3",      # Auth0 RS256 JWT validation
+    "httpx>=0.27",                         # JWKS fetch + outbound calls
+    "redis>=5.1",
+    "celery>=5.4",
+    "structlog>=24.4",
+    "pandas>=2.2",                         # connector DataFrames (Phase 1 ingestion)
+    "openpyxl>=3.1",                       # Google Sheets workbook (xlsx export) reader
+    "jellyfish>=1.1",                      # Jaro-Winkler vendor dedup (Phase 1)
+    "langgraph>=0.2",                      # Ingestion + Matching agent graphs (Phase 1/2)
+    "google-genai>=1.0",                   # Gemini model gateway / AI-inference / embeddings (Phase 2+)
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-grpc>=1.27",
+    "opentelemetry-instrumentation-fastapi>=0.48b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.48b0",
+    "opentelemetry-instrumentation-celery>=0.48b0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "testcontainers[postgres]>=4.8",       # real Postgres for RLS integration tests
+]
+
+# This is an application, not a distributable library: uv manages the venv and
+# dependencies but does not build/install the repo as a package. The `app`
+# package (apps/api/app) is made importable via pythonpath below.
+[tool.uv]
+package = false
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["apps/api"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+ignore = ["B008"]   # FastAPI uses Depends()/Query() calls in argument defaults
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+mypy_path = "apps/api"
+ignore_missing_imports = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["apps/api"]
+testpaths = ["apps/api/tests"]

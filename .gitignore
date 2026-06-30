@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.pnpm-store/
+
+# Env / secrets — never commit
+.env
+.env.local
+.env.*.local
+*.pem
+service-account*.json
+google-credentials*.json
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Build / data / IaC state
+*.log
+/tmp/
+.terraform/
+*.tfstate
+*.tfstate.*

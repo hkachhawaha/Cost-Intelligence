@@ -1,0 +1,22 @@
+{
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "as_of": "2026-06-30",
+  "contracts": [
+    {"id": "c1", "vendor_id": "v1", "acv": "1000000", "tcv": "3000000", "uplift_pct": "0.07", "renewal_type": "auto", "renewal_notice_days": 30, "end_date": "2026-06-30", "yearly_commit": null},
+    {"id": "c2", "vendor_id": "v2", "acv": "100000", "tcv": "300000", "uplift_pct": "0", "renewal_type": "none", "renewal_notice_days": 0, "end_date": "2026-12-31", "yearly_commit": "100000"},
+    {"id": "c3", "vendor_id": "v3", "acv": "200000", "tcv": "600000", "uplift_pct": "0", "renewal_type": "none", "renewal_notice_days": 0, "end_date": "2026-12-31", "yearly_commit": null}
+  ],
+  "matched_by_contract": {
+    "c2": [{"spend_id": "s2", "amount": "80000", "spend_date": "2026-03-01", "po_number": null}],
+    "c3": [{"spend_id": "s3", "amount": "230400", "spend_date": "2026-03-01", "po_number": null}]
+  },
+  "confidence_by_contract": {"c2": "1.0", "c3": "1.0"},
+  "unmatched_spend": [{"spend_id": "u1", "amount": "16000", "vendor_name": "Maverick Co"}],
+  "invoices": [
+    {"id": "iA1", "vendor_id": "vA", "invoice_number": "INV-A", "total_amount": "24125", "status": "paid", "contract_id": null},
+    {"id": "iA2", "vendor_id": "vA", "invoice_number": "INV-A", "total_amount": "24125", "status": "paid", "contract_id": null},
+    {"id": "iB1", "vendor_id": "vB", "invoice_number": "INV-B", "total_amount": "24125", "status": "paid", "contract_id": null},
+    {"id": "iB2", "vendor_id": "vB", "invoice_number": "INV-B", "total_amount": "24125", "status": "paid", "contract_id": null}
+  ],
+  "invoice_pos_by_contract": {}
+}
