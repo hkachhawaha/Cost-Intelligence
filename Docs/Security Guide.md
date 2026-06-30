@@ -13,7 +13,7 @@ User Browser ────(HTTPS)────► Vercel (Next.js Frontend)
 ```
 
 * **TLS Termination**: All public traffic terminates TLS 1.2+ at Vercel (for frontend) and Render's load balancer (for backend).
-* **CORS Policies**: The FastAPI backend configures CORS rules restricting incoming origins exclusively to the verified Vercel production domain (`https://web-ten-lime-73.vercel.app`).
+* **CORS Policies**: The FastAPI backend configures CORS rules restricting incoming origins exclusively to the verified Vercel production domain (`https://cost-intelligence-web.vercel.app`).
 
 ---
 
