@@ -6,7 +6,7 @@ gets written to `data_sources.credentials_secret`.
 
 Providers:
 - `env`  (default, local/dev): file-backed JSON under `LOCAL_SECRETS_DIR` (git-ignored).
-- `redis`: Redis-backed JSON store for dynamic secrets (e.g. on Railway/Vercel).
+- `redis`: Redis-backed JSON store for dynamic secrets (e.g. on Render/Vercel).
 - `aws_sm` / `gcp_sm`: stubbed here; wire to the cloud manager in deployment.
 """
 
