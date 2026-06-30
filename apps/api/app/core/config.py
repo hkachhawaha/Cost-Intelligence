@@ -40,10 +40,10 @@ class Settings(BaseSettings):
     clickhouse_url: str | None = None
 
     # --- Auth0 ---
-    auth0_domain: str
-    auth0_audience: str
-    auth0_client_id: str
-    auth0_client_secret: str
+    auth0_domain: str = Field(default="test-tenant.us.auth0.com")
+    auth0_audience: str = Field(default="https://api.terzo.ai")
+    auth0_client_id: str = Field(default="test-client-id")
+    auth0_client_secret: str = Field(default="test-client-secret")
     auth0_issuer: str | None = None  # defaults to https://{domain}/
 
     # --- Object store / secrets ---
