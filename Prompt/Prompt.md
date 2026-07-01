@@ -43,3 +43,13 @@ Used to draft renewal or cost saving advisories:
 * **Model**: `gemini-2.5-pro`
 * **Task**: Drafts natural language prose explaining recommended actions to a business user.
 * **Constraint**: Forbidden from recalculating financial math or editing provided savings metrics.
+
+---
+
+## 4. Gateway Timeout & Latency Resilience
+
+Since model endpoints (e.g. Gemini API, vector search DB) are invoked by containerized backends that may experience transient wake-up or connection latency:
+- **Connection Deadlines**: Client requests hitting NirvanAI or model gateways must employ a generous connection deadline (~10 seconds connect timeout, 30 seconds read timeout) to absorb transient start-up latencies of underlying systems.
+- **Graceful Timeouts**: In the event of a gateway or provider timeout, prompt clients must catch the error cleanly and return a structured fallback response rather than letting the web server crash.
+- **Retry Mechanics**: Local API client wrappers should implement a maximum of 3 retries with jittered backoff for rate-limiting (429) or gateway (502/503/504) responses.
+

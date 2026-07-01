@@ -92,6 +92,7 @@ export function CostIntelligenceApp({
   const [contractDetail, setContractDetail] = useState<string | null>(searchParams.get("contractId") ?? null);
   const [ccl, setCcl] = useState({ value: 500000, term: 3, indexShare: 40, tolerance: 25000 });
   const [chat, setChat] = useState<Chat>({ open: false, log: [] });
+  const [isWakingUp, setIsWakingUp] = useState(false);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -124,20 +125,46 @@ export function CostIntelligenceApp({
   async function load() {
     setLoading(true);
     setLoadError(null);
-    try {
-      const s = await apiClient.get<CiSnapshot>("/ci/snapshot");
-      setSnap(s);
-      setMissing(false);
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.detail : (e instanceof Error ? e.message : "Unknown error");
-      if (e instanceof ApiError && e.status === 404) {
-        setMissing(true);
-      } else {
-        setLoadError(msg);
-        console.error("[CostIntelligence] snapshot load failed:", msg);
+    setIsWakingUp(false);
+
+    const wakeUpTimer = setTimeout(() => {
+      setIsWakingUp(true);
+    }, 3000);
+
+    const maxRetries = 5;
+    let delay = 2000;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const s = await apiClient.get<CiSnapshot>("/ci/snapshot");
+        setSnap(s);
+        setMissing(false);
+        clearTimeout(wakeUpTimer);
+        setIsWakingUp(false);
+        setLoading(false);
+        return;
+      } catch (e) {
+        console.warn(`[CostIntelligence] Snapshot fetch attempt ${attempt} failed:`, e);
+        const is404 = e instanceof ApiError && e.status === 404;
+        if (is404) {
+          setMissing(true);
+          clearTimeout(wakeUpTimer);
+          setIsWakingUp(false);
+          setLoading(false);
+          return;
+        }
+
+        if (attempt === maxRetries) {
+          const msg = e instanceof ApiError ? e.detail : (e instanceof Error ? e.message : "Unknown error");
+          setLoadError(msg);
+          clearTimeout(wakeUpTimer);
+          setIsWakingUp(false);
+          setLoading(false);
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay = Math.min(delay * 1.5, 10000);
+        }
       }
-    } finally {
-      setLoading(false);
     }
   }
   useEffect(() => {
@@ -150,7 +177,20 @@ export function CostIntelligenceApp({
     [snap, statuses],
   );
 
-  if (loading) return <div className="ci-loading">Loading Cost Intelligence…</div>;
+  if (loading) {
+    return (
+      <div className="ci-loading">
+        <div>Loading Cost Intelligence…</div>
+        {isWakingUp && (
+          <div className="ci-loading-subtext" style={{ marginTop: 12 }}>
+            ⚠️ The backend is waking up from free-tier sleep on Render.
+            <br />
+            Please wait, this can take up to 30-40 seconds...
+          </div>
+        )}
+      </div>
+    );
+  }
   if (loadError) {
     return (
       <div className="ci-shell"><div className="app">

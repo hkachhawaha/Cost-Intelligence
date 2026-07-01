@@ -123,3 +123,27 @@ Below is the actual cost for running the platform — **all services use free ti
 | **Google** | Gemini API | Free Tier | **$0.00** | 15 RPM (Pro) / 30 RPM (Flash); generous free quota. |
 | **Total** | | | **$0.00 / month** | **100% free tier — no paid plans active.** |
 
+---
+
+## 5. Free-Tier Cold-Start & Keep-Warm Mitigation
+
+Because the FastAPI backend runs on Render's **Free Tier**, the hosting container automatically spins down (goes to sleep) after 15 minutes of user inactivity. 
+
+When a user visits the URL for the first time or refreshes the page after the service has spun down, they will experience a **cold start latency of ~30 seconds** while Render spins up the container.
+
+### Mitigation Strategies
+
+#### 1. Programmatic Frontend Retry & Warning (Implemented)
+The frontend client in [CostIntelligenceApp.tsx](file:///apps/web/app/ci/CostIntelligenceApp.tsx) is equipped with a **boot-up cold-start resilience handler**:
+- **Pulsing Loading State**: If the backend takes longer than 3 seconds to respond, a pulsing warning is displayed: `⚠️ The backend is waking up from free-tier sleep on Render. Please wait, this can take up to 30-40 seconds...`.
+- **Exponential Backoff**: The app automatically retries the initial snapshot request up to 5 times (with increasing delays of 2s, 3s, 4.5s, 6.7s) before giving up and showing a connection error. This prevents the page load from failing or locking up during container startup.
+
+#### 2. Ping-Based Keep-Warm Strategy (Recommended)
+To keep the backend warm and prevent it from sleeping altogether, you can set up a free keep-alive monitor:
+1. **Choose a Monitor**: Sign up for a free account on [UptimeRobot](https://uptimerobot.com/), [cron-job.org](https://cron-job.org/), or [Better Stack](https://betterstack.com/).
+2. **Configure HTTP Ping**: Set up an HTTP check pointing to the root `/healthz` liveness endpoint:
+   - **Target URL**: `https://cost-intelligence-api.onrender.com/healthz`
+   - **Interval**: Run the ping check every **10 to 14 minutes** (Render sleeps at exactly 15 minutes of inactivity).
+3. **Outcome**: The recurring HTTP request wakes up or keeps the Render container active, guaranteeing 0ms cold-start latency when users open the Vercel site.
+
+
