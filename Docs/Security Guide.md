@@ -42,15 +42,15 @@ If no session context is active, queries default to returning **zero rows** (fai
 
 ## 3. Authentication & JWT Validation
 
-The application utilizes **Auth0** for user identity:
-* **JWT Claims**: Auth0 signs user tokens containing custom namespace claims including `tenant_id` and `roles`.
-* **RS256 Pinned Signature**: The API only accepts JWTs signed using the RS256 algorithm. Symmetric token validations are rejected.
-* **JWKS Caching**: Public keys are loaded from Auth0's JWKS endpoint and cached in memory. If a token presents an unknown Key ID (`kid`), the keys are fetched once to handle key rotations.
+The application utilizes **Supabase Auth** for user identity:
+* **JWT Claims**: Supabase signs user tokens containing session claims in `app_metadata` (including `tenant_id` and `roles`).
+* **HS256 Symmetrical Signature**: The API decodes user tokens using the symmetrically-configured project `SUPABASE_JWT_SECRET` with the HS256 algorithm.
+* **Fallback Compatibility**: For existing test configurations, a fallback to Auth0 RS256 JWKS parsing is maintained when the Supabase secret is unconfigured.
 
 ---
 
 ## 4. Secrets Management
 
-* **No Plaintext Configuration**: Credentials and secret keys (`AUTH0_CLIENT_SECRET`, `GEMINI_API_KEY`, database connection passwords) are never committed to git.
+* **No Plaintext Configuration**: Credentials and secret keys (`SUPABASE_JWT_SECRET`, `GEMINI_API_KEY`, database connection passwords) are never committed to git.
 * **Environment Injection**: Production parameters are injected directly into Render's service environment settings and mapped to container environments.
 * **Redis Caching for Dynamic Tokens**: Refresh tokens and dynamic connection details are encrypted and stored in a shared Redis cache (using the `redis` secrets provider), preventing file leaks on Render's ephemeral container disks.

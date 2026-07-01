@@ -1,8 +1,11 @@
 // Typed fetch client for the FastAPI backend.
-// Attaches the Auth0 access token as a Bearer header (resolved lazily so this
+// Attaches the Supabase access token as a Bearer header (resolved lazily so this
 // module is importable in plain test environments), normalizes errors, parses JSON.
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000/api/v1";
+// Relative URL so all environments (Vercel, local, preview) use the same-origin
+// Next.js proxy (rewrites in next.config.js) without exposing the backend URL.
+// Override with NEXT_PUBLIC_API_BASE only if you need a direct cross-origin base.
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "/api/v1";
 
 export class ApiError extends Error {
   constructor(
@@ -18,12 +21,19 @@ export class ApiError extends Error {
 /** Server-side typed fetch. */
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { DEV_AUTH } = await import("@/lib/dev");
-  // Local dev: backend's dev_auth_bypass injects the demo principal — send no Auth0 token.
+  // Local dev: backend's dev_auth_bypass injects the demo principal — send no token.
   const authHeader: Record<string, string> = {};
-  if (!DEV_AUTH) {
-    const { getAccessToken } = await import("@auth0/nextjs-auth0");
-    const { accessToken } = await getAccessToken();
-    authHeader.Authorization = `Bearer ${accessToken}`;
+  if (!DEV_AUTH && typeof window === "undefined") {
+    try {
+      // Dynamic import hidden from webpack so next/headers doesn't leak into client bundles.
+      const authMod = await (Function('return import("@/lib/auth")')() as Promise<{ accessToken: () => Promise<string | undefined> }>);
+      const token = await authMod.accessToken();
+      if (token) {
+        authHeader.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // Auth module unavailable — proceed without token.
+    }
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -57,7 +67,7 @@ export const api = {
 };
 
 // ── Phase 5 ─────────────────────────────────────────────────────────────────
-// Server components read through `apiServer` (Auth0 token injected server-side,
+// Server components read through `apiServer` (Supabase token injected server-side,
 // always fresh — memory is the cache). Client components mutate through
 // `apiClient` (cookie-credentialed; token attached by the browser session).
 

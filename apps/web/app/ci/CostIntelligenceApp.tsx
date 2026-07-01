@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { apiClient } from "@/lib/api";
+import { ApiError, apiClient } from "@/lib/api";
 import {
   ACT_CATEGORIES,
   actIcon,
@@ -75,28 +76,66 @@ export function CostIntelligenceApp({
   initialSnapshot,
   initialTab,
 }: { initialSnapshot?: CiSnapshot | null; initialTab?: string } = {}) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [snap, setSnap] = useState<CiSnapshot | null>(initialSnapshot ?? null);
   const [loading, setLoading] = useState(!initialSnapshot);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
-  const [tab, setTab] = useState(initialTab ?? "home");
+  const [tab, setTab] = useState(searchParams.get("tab") ?? initialTab ?? "home");
   const [statuses, setStatuses] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [oppFilter, setOppFilter] = useState("all");
   const [spendFilter] = useState({ q: "", cat: "", match: "" });
   const [indexMove, setIndexMove] = useState(5);
   const [contractView, setContractView] = useState<"cards" | "table">("cards");
-  const [contractDetail, setContractDetail] = useState<string | null>(null);
+  const [contractDetail, setContractDetail] = useState<string | null>(searchParams.get("contractId") ?? null);
   const [ccl, setCcl] = useState({ value: 500000, term: 3, indexShare: 40, tolerance: 25000 });
   const [chat, setChat] = useState<Chat>({ open: false, log: [] });
 
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const t = params.get("tab") || "home";
+      const cid = params.get("contractId");
+      setTab(t);
+      setContractDetail(cid);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const goTab = (t: string) => {
+    setTab(t);
+    setContractDetail(null);
+    window.history.pushState(null, "", "/ci?tab=" + t);
+  };
+
+  const viewContract = (id: string) => {
+    setContractDetail(id);
+    window.history.pushState(null, "", `/ci?tab=contracts&contractId=${id}`);
+  };
+
+  const backToContracts = () => {
+    setContractDetail(null);
+    window.history.pushState(null, "", `/ci?tab=contracts`);
+  };
+
   async function load() {
     setLoading(true);
+    setLoadError(null);
     try {
       const s = await apiClient.get<CiSnapshot>("/ci/snapshot");
       setSnap(s);
       setMissing(false);
-    } catch {
-      setMissing(true);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.detail : (e instanceof Error ? e.message : "Unknown error");
+      if (e instanceof ApiError && e.status === 404) {
+        setMissing(true);
+      } else {
+        setLoadError(msg);
+        console.error("[CostIntelligence] snapshot load failed:", msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -112,10 +151,22 @@ export function CostIntelligenceApp({
   );
 
   if (loading) return <div className="ci-loading">Loading Cost Intelligence…</div>;
+  if (loadError) {
+    return (
+      <div className="ci-shell"><div className="app">
+        <Sidebar tab={tab} setTab={goTab} counts={{}} onAsk={() => setChat({ ...chat, open: true })} />
+        <main className="main">
+          <div className="pt">Unable to load data</div>
+          <div className="psub" style={{ color: "var(--red, #e53e3e)", marginBottom: 16 }}>{loadError}</div>
+          <button className="btn p" onClick={load}>Retry</button>
+        </main>
+      </div></div>
+    );
+  }
   if (missing || !snap) {
     return (
       <div className="ci-shell"><div className="app">
-        <Sidebar tab={tab} setTab={setTab} counts={{}} onAsk={() => setChat({ ...chat, open: true })} />
+        <Sidebar tab={tab} setTab={goTab} counts={{}} onAsk={() => setChat({ ...chat, open: true })} />
         <main className="main">
           <div className="pt">Connect your data</div>
           <div className="psub">No spreadsheet is connected yet — add your Google Sheet to begin.</div>
@@ -212,7 +263,7 @@ export function CostIntelligenceApp({
                 <div className="hchip">Save each year<b>{fmtK(k.savings)}</b></div>
                 <div className="hchip">Recovered<b>{fmtK(recovered)}</b></div>
               </div>
-              <button className="cta" onClick={() => setTab("opps")}>Review top actions →</button>
+              <button className="cta" onClick={() => goTab("opps")}>Review top actions →</button>
             </div>
             <div className="card">
               <div className="metric"><div><Ring p={k.spendUnderMgmtPct} size={92} stroke={11} /></div>
@@ -222,7 +273,7 @@ export function CostIntelligenceApp({
                 <div><div className="mt">Off-contract exposure</div><div className="mv">{fmtK(k.maverick)}</div><div className="ms">spend with no contract</div></div></div>
             </div>
           </div>
-          <div className="sectlbl">🎯 Top things to act on <span className="more" onClick={() => setTab("act")}>Open Act ›</span></div>
+          <div className="sectlbl">🎯 Top things to act on <span className="more" onClick={() => goTab("act")}>Open Act ›</span></div>
           <div className="grid g2">{opps.slice(0, 4).map((o) => OppCard(o))}</div>
           <div className="grid g2" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 18 }}>
             <div className="card"><div className="sectlbl" style={{ margin: "0 0 6px" }}>💸 Where your money goes</div>
@@ -323,7 +374,7 @@ export function CostIntelligenceApp({
           <>{toggleEl}
             <div className="card" style={{ padding: "6px 16px" }}><table className="ltable"><thead><tr><th>Contract</th><th>Supplier</th><th>Category</th><th>Entity</th><th style={{ textAlign: "right" }}>ACV</th><th style={{ textAlign: "right" }}>Actual</th><th>Utilisation</th><th>Renewal</th><th>Ends</th><th style={{ textAlign: "right" }}>Opportunity</th><th /></tr></thead>
               <tbody>{s.contracts.map((c) => { const act = sum(byContract(s, c.id)), base = c.yearlyCommit || c.acv || 1, u = pct(act, base); const col = u > 100 ? "var(--red)" : u >= 80 ? "var(--green)" : "var(--amber)"; const op = oppByContract(c.id);
-                return (<tr key={c.id} onClick={() => setContractDetail(c.id)}><td style={{ fontWeight: 600 }}>{c.id}</td><td style={{ fontWeight: 600 }}>{c.vendor}</td><td>{c.category}</td><td>{c.entity}</td><td style={{ textAlign: "right" }}>{fmtK(c.acv || 0)}</td><td style={{ textAlign: "right" }}>{fmtK(act)}</td><td><span className="ut"><i style={{ width: `${Math.min(100, u)}%`, background: col }} /></span>{u.toFixed(0)}%</td><td>{badge(c)}</td><td>{c.end}</td><td style={{ textAlign: "right", fontWeight: 700, color: "var(--purple-d)" }}>{op ? fmtK(op) : "—"}</td><td style={{ color: "var(--purple)", fontWeight: 700 }}>›</td></tr>);
+                return (<tr key={c.id} onClick={() => viewContract(c.id)}><td style={{ fontWeight: 600 }}>{c.id}</td><td style={{ fontWeight: 600 }}>{c.vendor}</td><td>{c.category}</td><td>{c.entity}</td><td style={{ textAlign: "right" }}>{fmtK(c.acv || 0)}</td><td style={{ textAlign: "right" }}>{fmtK(act)}</td><td><span className="ut"><i style={{ width: `${Math.min(100, u)}%`, background: col }} /></span>{u.toFixed(0)}%</td><td>{badge(c)}</td><td>{c.end}</td><td style={{ textAlign: "right", fontWeight: 700, color: "var(--purple-d)" }}>{op ? fmtK(op) : "—"}</td><td style={{ color: "var(--purple)", fontWeight: 700 }}>›</td></tr>);
               })}</tbody></table></div>
           </>
         );
@@ -331,7 +382,7 @@ export function CostIntelligenceApp({
       return (
         <>{toggleEl}
           <div className="grid g2">{s.contracts.map((c) => { const act = sum(byContract(s, c.id)), base = c.yearlyCommit || c.acv || 1, u = pct(act, base); const col = u > 100 ? "var(--red)" : u >= 80 ? "var(--green)" : "var(--amber)"; const op = oppByContract(c.id);
-            return (<div className="card ccard clickable" key={c.id} onClick={() => setContractDetail(c.id)}><div><Ring p={Math.min(u, 100)} size={76} stroke={9} color={col} /></div>
+            return (<div className="card ccard clickable" key={c.id} onClick={() => viewContract(c.id)}><div><Ring p={Math.min(u, 100)} size={76} stroke={9} color={col} /></div>
               <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 750, fontSize: 15 }}>{c.vendor}</div><div style={{ fontSize: 12.5, color: "var(--muted)", margin: "1px 0 8px" }}>{c.category} · {c.entity}</div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>{badge(c)}<span style={{ fontSize: 12.5, color: "#4a4660" }}>ACV {fmtK(c.acv || 0)}</span><span style={{ fontSize: 12.5, color: "var(--muted)" }}>ends {c.end}</span></div>
                 {op ? <div style={{ marginTop: 8, fontSize: 12.5, color: "var(--purple-d)", fontWeight: 700 }}>💡 {fmtK(op)} opportunity</div> : null}
@@ -406,7 +457,7 @@ export function CostIntelligenceApp({
               <div className="grid g2">{items.map((o) => { const cf = o.contractId ? cById(s, o.contractId) : null; return (<div className="card" style={{ padding: "15px 17px", display: "flex", flexDirection: "column", gap: 9 }} key={o.id}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}><div className={`icon ${o.bucket === "recovery" ? "ic-rec" : "ic-sav"}`}>{o.icon}</div><div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 750, fontSize: 14 }}>{o.type}</div><div style={{ fontSize: 12.5, color: "var(--muted)" }}>{cf ? cf.vendor : o.subject || ""}</div></div><div style={{ textAlign: "right" }}><div style={{ fontWeight: 800, fontSize: 18 }}>{fmtK(o.impact)}</div></div></div>
                 <div style={{ fontSize: 12.5, color: "#4a4660" }}><b>Do this:</b> {o.action}</div>
-                <div className="linkrow">{cf ? <button className="btn sm p" onClick={() => draftDoc(cf.vendor, o.bucket === "recovery" ? "challenge" : "reneg")}>✦ Draft with NirvanaI</button> : <button className="btn sm p" onClick={() => setTab("opps")}>Review in Opportunities</button>}<button className="btn sm" onClick={() => setStatus(o.id, "recovered")}>Mark done</button></div></div>); })}</div></div>);
+                <div className="linkrow">{cf ? <button className="btn sm p" onClick={() => draftDoc(cf.vendor, o.bucket === "recovery" ? "challenge" : "reneg")}>✦ Draft with NirvanaI</button> : <button className="btn sm p" onClick={() => goTab("opps")}>Review in Opportunities</button>}<button className="btn sm" onClick={() => setStatus(o.id, "recovered")}>Mark done</button></div></div>); })}</div></div>);
           })}
           {!list.length && <div className="empty">All actions complete 🎉</div>}
         </>
@@ -578,7 +629,7 @@ export function CostIntelligenceApp({
     const consumed = Math.min(act, base); const remaining = base - act; const variance = act - (c.acv || 0);
     return (
       <>
-        <div className="backlink" onClick={() => setContractDetail(null)}>‹ Back to contracts</div>
+        <div className="backlink" onClick={() => backToContracts()}>‹ Back to contracts</div>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 4 }}><div className="av" style={{ width: 50, height: 50, fontSize: 20, borderRadius: 14 }}>{c.vendor.slice(0, 1)}</div>
           <div><div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.5px" }}>{c.vendor}</div><div style={{ color: "var(--muted)", fontSize: 13 }}>{c.id} · {c.category} · {c.entity}</div></div>
           <div style={{ marginLeft: "auto" }}>{c.status === "Expired" ? <span className="badge b-exp">Expired</span> : c.autoRenew ? <span className="badge b-auto">Auto-renews</span> : <span className="badge b-opt">Option to renew</span>}</div></div>
@@ -625,12 +676,10 @@ export function CostIntelligenceApp({
   const now = new Date(s.syncedAt + "");
   const hr = now.getHours();
   const greeting = tab === "home" ? `${hr < 12 ? "Good morning" : hr < 18 ? "Good afternoon" : "Good evening"}, Himalaya` : "";
-  const go = (t: string) => { setTab(t); setContractDetail(null); };
-
   return (
     <div className="ci-shell">
       <div className="app">
-        <Sidebar tab={tab} setTab={go} counts={counts} onAsk={() => setChat({ ...chat, open: true })} />
+        <Sidebar tab={tab} setTab={goTab} counts={counts} onAsk={() => setChat({ ...chat, open: true })} />
         <main className="main">
           <div className="hi">{greeting}</div>
           <div className="pt">{title}</div>
@@ -653,7 +702,7 @@ function Sidebar({ tab, setTab, counts, onAsk }: { tab: string; setTab: (t: stri
           <span key={grp}>
             <div className="grp">{grp}</div>
             {items.map(([id, nm, ic]) => (
-              <a key={id} className={id === tab ? "active" : ""} onClick={() => setTab(id)}><span className="ic">{ic}</span>{nm}{counts[id] ? <span className="ct">{counts[id]}</span> : null}</a>
+              <a key={id} href={`/ci?tab=${id}`} className={id === tab ? "active" : ""} onClick={(e) => { e.preventDefault(); setTab(id); }}><span className="ic">{ic}</span>{nm}{counts[id] ? <span className="ct">{counts[id]}</span> : null}</a>
             ))}
           </span>
         ))}

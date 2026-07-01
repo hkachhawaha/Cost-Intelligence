@@ -1,4 +1,3 @@
-import { accessToken } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
 
 interface DataSource {
@@ -17,10 +16,7 @@ export default async function DataSourcesPage() {
   let sources: DataSource[] = [];
   let error: string | null = null;
   try {
-    const token = await accessToken();
-    sources = await apiFetch<DataSource[]>("/data-sources", { token } as RequestInit & {
-      token?: string;
-    });
+    sources = await apiFetch<DataSource[]>("/data-sources");
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load data sources";
   }

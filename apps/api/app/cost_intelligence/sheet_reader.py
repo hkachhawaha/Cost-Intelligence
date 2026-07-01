@@ -30,6 +30,7 @@ def extract_spreadsheet_id(url_or_id: str) -> str:
     """Accept a full Google Sheets URL or a bare spreadsheet id."""
     if not url_or_id:
         raise SheetReadError("no spreadsheet URL provided")
+    url_or_id = url_or_id.strip()
     m = _ID_RE.search(url_or_id)
     if m:
         return m.group(1)
@@ -88,8 +89,11 @@ class GoogleSheetReader:
 
     async def fetch_xlsx(self, spreadsheet_id: str) -> bytes:
         url = _xlsx_export_url(spreadsheet_id)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
         async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
-            resp = await client.get(url)
+            resp = await client.get(url, headers=headers)
             if resp.status_code != 200:
                 raise SheetReadError(
                     f"could not fetch workbook (HTTP {resp.status_code}); is the sheet shared "

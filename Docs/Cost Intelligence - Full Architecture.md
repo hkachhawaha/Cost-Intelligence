@@ -76,6 +76,8 @@ It also emits **Contract↔Invoice** (`contractToInvoiceCount`), **Invoice↔Spe
 
 **Navigation (5 groups, 16 screens):** **Overview** (Home, Opportunities) · **Analyze** (Analyze hub, Spend, Contracts + contract drill-down, Vendors, Indexation) · **Act** (Act hub, Margin Recovery, Renewals, Commitments, Commitment Check) · **Intelligence** (Intelligence hub, Portfolio) · **System** (Data Quality, Settings). Home leads with a greeting + a "we found money" hero, a spend-under-management ring, top-action cards, a spend donut and an alerts panel. Every view reads `GET /ci/snapshot` (Agent Memory) and derives its widgets client-side; opportunity cards expand to formula + evidence + action and offer **Draft with NirvanaI**.
 
+**URL-based routing:** each navigation tab is reflected in the browser URL as `/ci?tab=<name>` (e.g. `/ci?tab=spend`, `/ci?tab=settings`), and contract detail views are tracked as `/ci?tab=contracts&contractId=<id>`. `useSearchParams` initialises the active tab and contract ID from the URL on load; history pushState updates the URL on every tab switch or drill-down without triggering a full page reload or re-fetch. Sidebar `<a>` elements and detail drill-downs sync with the address bar, and a `popstate` listener ensures browser back/forward buttons work seamlessly. The page component wraps `CostIntelligenceApp` in a `<Suspense>` boundary as required by Next.js 14 when `useSearchParams` is used inside a client component.
+
 **NirvanAI surface:** a global slide-out chat + the sidebar **✦ Ask NirvanaI** button + the Intelligence hub, all calling `POST /ci/nirvana/ask` (memory-grounded, LLM-phrased with deterministic fallback — §R.5); document drafting (`genDoc`) renders into the chat.
 
 **Settings → Cost Intelligence → Data Source Configuration** (retained, restyled): Spreadsheet URL, Spreadsheet Name, Last Successful Sync, Sync Status, Total Records Processed; actions **Connect Spreadsheet / Test Connection / Refresh Data / Save Configuration**.
@@ -90,6 +92,8 @@ POST /api/v1/ci/data-source/refresh      → re-read the connected sheet → new
 GET  /api/v1/ci/snapshot                 → full Agent Memory payload (powers every view)
 ```
 Single-workspace: these endpoints carry no tenant/auth gate. Config in `app/core/config.py` (`ci_*`): default spreadsheet URL, fetch timeout, recapture/unused/overspend/lookahead/renewal-uplift/shelfware assumptions, optional `ci_as_of_date`.
+
+**Frontend → Backend routing (production):** `apps/web/next.config.js` rewrites `/api/v1/:path*` to `${API_BASE_URL}/api/v1/:path*` server-side — the backend URL is a server-only env var (`API_BASE_URL`) never exposed in client bundles. All `apiClient` calls use relative URLs (`/api/v1/…`) and therefore work transparently on any Vercel preview or production domain without CORS configuration.
 
 ---
 
@@ -202,11 +206,11 @@ Stand up a running, multi-tenant monorepo skeleton — FastAPI backend, Next.js 
 - Docker Compose local dev stack with **every** service (Postgres+pgvector, Redis, ClickHouse, API, web, celery worker, celery beat, otel-collector, mailhog stub).
 - **Migration 001**: `tenants`, `entities`, `users`, `roles`, `agent_runs`, `audit_events` with full DDL, RLS policies, and append-only rules on audit tables.
 - Base SQLAlchemy 2.0 ORM: `Base`, `TenantScopedMixin`, and the six core models.
-- FastAPI bootstrap: `main.py` (lifespan + middleware), `core/config.py` (Pydantic Settings), `core/database.py` (async engine + per-request RLS session injection), `core/auth.py` (Auth0 RS256 JWT validation + JWKS cache), `core/tenancy.py` (context vars + RLS `set_config`).
-- Next.js 14 bootstrap: root `layout.tsx`, `middleware.ts` route protection, `lib/api.ts` typed fetch client, Auth0 SDK session handling.
+- FastAPI bootstrap: `main.py` (lifespan + middleware), `core/config.py` (Pydantic Settings), `core/database.py` (async engine + per-request RLS session injection), `core/auth.py` (Supabase Auth HS256 JWT validation / Auth0 fallback), `core/tenancy.py` (context vars + RLS `set_config`).
+- Next.js 14 bootstrap: root `layout.tsx`, `middleware.ts` route protection, `lib/api.ts` typed fetch client, cookie-based Supabase session parsing.
 - GitHub Actions `ci.yml` (lint, typecheck, migration dry-run, tests, RLS isolation test gate).
 - RBAC role/permission matrix (7 roles) seeded.
-- Secrets management approach (Auth0 + Vercel/Render environment config + Redis secrets store; no secrets in repo).
+- Secrets management approach (Supabase + Vercel/Render environment config + Redis secrets store; no secrets in repo).
 - PaaS deployment guide / Terraform module outline for the cloud foundation (Vercel, Render, Postgres, Redis, KMS).
 - OpenTelemetry bootstrap (traces + metrics from API and workers to an OTLP collector).
 
@@ -947,7 +951,7 @@ def get_tenant() -> str | None:
     return current_tenant.get()
 ```
 
-### 5.4 `core/auth.py` — Auth0 RS256 JWT validation with JWKS cache
+### 5.4 `core/auth.py` — Supabase Auth & Auth0 Fallback JWT Validation
 
 ```python
 # apps/api/app/core/auth.py
@@ -973,7 +977,7 @@ _NS = "https://terzo.ai"
 
 @dataclass(frozen=True)
 class Principal:
-    user_id: str            # JWT `sub`
+    user_id: str  # JWT `sub`
     tenant_id: str
     role: str | None
     entity_id: str | None
@@ -993,7 +997,7 @@ class _JWKSCache:
         if kid not in self._keys or (time.time() - self._fetched_at) > self._ttl:
             await self._refresh()
         if kid not in self._keys:
-            # Unknown kid even after refresh ⇒ key rotated/invalid.
+            # Unknown kid even after a TTL-driven refresh ⇒ force one more (rotation).
             await self._refresh()
         key = self._keys.get(kid)
         if key is None:
@@ -1012,51 +1016,98 @@ class _JWKSCache:
 jwks_cache = _JWKSCache()
 
 
+def _dev_bypass_active() -> bool:
+    """Local-only auth bypass. Refused in production no matter the flag (defense in depth)."""
+    return settings.dev_auth_bypass and not settings.is_production
+
+
+def _dev_principal() -> Principal:
+    """Fixed demo Principal for local end-to-end testing. Binds the demo tenant for RLS."""
+    set_tenant(settings.dev_tenant_id)
+    return Principal(
+        user_id=settings.dev_user_id,
+        tenant_id=settings.dev_tenant_id,
+        role=settings.dev_role,
+        entity_id=None,
+        email="dev@terzo.local",
+        permissions=("*",),
+    )
+
+
 async def get_current_principal(
     creds: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> Principal:
+    if _dev_bypass_active():
+        return _dev_principal()
     if creds is None or creds.scheme.lower() != "bearer":
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")
     token = creds.credentials
 
     try:
-        header = jwt.get_unverified_header(token)
-    except JWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "malformed token") from exc
-
-    kid = header.get("kid")
-    if not kid:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token missing kid")
-
-    key = await jwks_cache.get_key(kid)
-
-    try:
-        claims = jwt.decode(
-            token,
-            key,
-            algorithms=["RS256"],
-            audience=settings.auth0_audience,
-            issuer=settings.auth0_issuer,
-        )
+        if settings.supabase_jwt_secret:
+            # Decode using Supabase HS256
+            claims = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
+        else:
+            # Decode using Auth0 RS256
+            header = jwt.get_unverified_header(token)
+            kid = header.get("kid")
+            if not kid:
+                raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token missing kid")
+            key = await jwks_cache.get_key(kid)
+            claims = jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                audience=settings.auth0_audience,
+                issuer=settings.auth0_issuer,
+            )
     except ExpiredSignatureError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token expired") from exc
     except JWTError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"invalid token: {exc}") from exc
 
-    tenant_id = claims.get(f"{_NS}/tenant_id")
+    # Unpack claims: support both custom namespace and Supabase app_metadata
+    app_metadata = claims.get("app_metadata", {})
+    tenant_id = (
+        app_metadata.get("tenant_id")
+        or claims.get("tenant_id")
+        or claims.get(f"{_NS}/tenant_id")
+    )
     if not tenant_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "token missing tenant claim")
 
     # Bind tenant to the request context BEFORE any DB access in the handler.
     set_tenant(tenant_id)
 
+    role = (
+        app_metadata.get("role")
+        or claims.get("role")
+        or claims.get(f"{_NS}/role")
+    )
+    entity_id = (
+        app_metadata.get("entity_id")
+        or claims.get("entity_id")
+        or claims.get(f"{_NS}/entity_id")
+    )
+    email = claims.get("email") or app_metadata.get("email")
+    permissions = (
+        app_metadata.get("permissions")
+        or claims.get("permissions")
+        or claims.get(f"{_NS}/permissions", [])
+    )
+
     return Principal(
         user_id=claims["sub"],
         tenant_id=tenant_id,
-        role=claims.get(f"{_NS}/role"),
-        entity_id=claims.get(f"{_NS}/entity_id"),
-        email=claims.get(f"{_NS}/email") or claims.get("email"),
-        permissions=tuple(claims.get(f"{_NS}/permissions", [])),
+        role=role,
+        entity_id=entity_id,
+        email=email,
+        permissions=tuple(permissions),
     )
 ```
 

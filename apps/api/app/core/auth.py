@@ -95,41 +95,68 @@ async def get_current_principal(
     token = creds.credentials
 
     try:
-        header = jwt.get_unverified_header(token)
-    except JWTError as exc:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "malformed token") from exc
-
-    kid = header.get("kid")
-    if not kid:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token missing kid")
-
-    key = await jwks_cache.get_key(kid)
-
-    try:
-        claims = jwt.decode(
-            token,
-            key,
-            algorithms=["RS256"],  # pinned: reject alg:none / HS256 confusion
-            audience=settings.auth0_audience,
-            issuer=settings.auth0_issuer,
-        )
+        if settings.supabase_jwt_secret:
+            # Decode using Supabase HS256
+            claims = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
+        else:
+            # Decode using Auth0 RS256
+            header = jwt.get_unverified_header(token)
+            kid = header.get("kid")
+            if not kid:
+                raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token missing kid")
+            key = await jwks_cache.get_key(kid)
+            claims = jwt.decode(
+                token,
+                key,
+                algorithms=["RS256"],
+                audience=settings.auth0_audience,
+                issuer=settings.auth0_issuer,
+            )
     except ExpiredSignatureError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "token expired") from exc
     except JWTError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"invalid token: {exc}") from exc
 
-    tenant_id = claims.get(f"{_NS}/tenant_id")
+    # Unpack claims: support both custom namespace and Supabase app_metadata
+    app_metadata = claims.get("app_metadata", {})
+    tenant_id = (
+        app_metadata.get("tenant_id")
+        or claims.get("tenant_id")
+        or claims.get(f"{_NS}/tenant_id")
+    )
     if not tenant_id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "token missing tenant claim")
 
     # Bind tenant to the request context BEFORE any DB access in the handler.
     set_tenant(tenant_id)
 
+    role = (
+        app_metadata.get("role")
+        or claims.get("role")
+        or claims.get(f"{_NS}/role")
+    )
+    entity_id = (
+        app_metadata.get("entity_id")
+        or claims.get("entity_id")
+        or claims.get(f"{_NS}/entity_id")
+    )
+    email = claims.get("email") or app_metadata.get("email")
+    permissions = (
+        app_metadata.get("permissions")
+        or claims.get("permissions")
+        or claims.get(f"{_NS}/permissions", [])
+    )
+
     return Principal(
         user_id=claims["sub"],
         tenant_id=tenant_id,
-        role=claims.get(f"{_NS}/role"),
-        entity_id=claims.get(f"{_NS}/entity_id"),
-        email=claims.get(f"{_NS}/email") or claims.get("email"),
-        permissions=tuple(claims.get(f"{_NS}/permissions", [])),
+        role=role,
+        entity_id=entity_id,
+        email=email,
+        permissions=tuple(permissions),
     )

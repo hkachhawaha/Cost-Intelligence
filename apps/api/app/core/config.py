@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     auth0_client_secret: str = Field(default="test-client-secret")
     auth0_issuer: str | None = None  # defaults to https://{domain}/
 
+    # --- Supabase ---
+    supabase_jwt_secret: str | None = None
+
     # --- Object store / secrets ---
     s3_bucket: str | None = None
     aws_region: str = "us-east-1"

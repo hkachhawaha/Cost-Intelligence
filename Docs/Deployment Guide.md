@@ -1,10 +1,10 @@
 # Production Deployment & Hosting Architecture Guide
 
-This document outlines the recommended hosting, deployment instructions, and cost projection for **Terzo Cost Intelligence** on **Vercel** and **Render**.
+This document outlines the recommended hosting, deployment instructions, and cost projection for **Terzo Cost Intelligence** on **Vercel** and **Render** using **Supabase** as the database and auth provider.
 
 ---
 
-## 1. Target Architecture (Vercel & Render)
+## 1. Target Architecture (Vercel, Render & Supabase)
 
 ```mermaid
 graph TB
@@ -17,7 +17,11 @@ graph TB
             FastAPI["FastAPI App Process<br/>(API Port 8000)"]
             CeleryWorker["Celery Background Worker Process<br/>(AI matching & analytics)"]
         end
-        Postgres["Managed PostgreSQL<br/>(pgvector + RLS)"]
+    end
+
+    subgraph Datastore ["Supabase Cloud"]
+        Postgres["Managed PostgreSQL DB<br/>(pgvector enabled)"]
+        SupabaseAuth["Supabase GoTrue Auth Service<br/>(HS256 Session JWTs)"]
     end
 
     subgraph RedisProvider ["Upstash Cloud"]
@@ -25,15 +29,14 @@ graph TB
     end
 
     subgraph IDP ["External Services"]
-        Auth0["Auth0 SSO IDP<br/>(JWT RS256 token verification)"]
         Gemini["Google Gemini API<br/>(Model Gateway / Embeddings)"]
     end
 
     %% Flow lines
     User((User Web Browser)) -->|HTTPS| NextJS
     User -->|HTTPS| FastAPI
-    NextJS -->|SSO Login / Session| Auth0
-    FastAPI -->|Authorize Claims| Auth0
+    NextJS -->|SSO Login / Session Cookie| SupabaseAuth
+    FastAPI -->|Authorize Claims| SupabaseAuth
     FastAPI -->|Queries| Postgres
     FastAPI -->|Cache / Queue Tasks| Redis
     CeleryWorker -->|Read Queue / Cache| Redis
@@ -50,18 +53,15 @@ graph TB
 * **Output Directory**: `.next`
 * **Required Environment Variables**:
   * `NEXT_PUBLIC_API_BASE`: URL of your Render FastAPI deployment (e.g., `https://cost-intelligence-api.onrender.com/api/v1`).
-  * `AUTH0_SECRET`: Random 32-byte hex string.
-  * `AUTH0_BASE_URL`: Vercel app domain (e.g., `https://cost-intelligence-web.vercel.app`).
-  * `AUTH0_ISSUER_BASE_URL`: Your Auth0 domain (e.g., `https://tenant.us.auth0.com`).
-  * `AUTH0_CLIENT_ID`: Auth0 Web Client ID.
-  * `AUTH0_CLIENT_SECRET`: Auth0 Web Client Secret.
+  * `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase Project API URL (e.g., `https://[ref].supabase.co`).
+  * `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase Project Anon/Public Key.
 
 ### Unified FastAPI Backend & Celery Worker (Render)
 To operate within Render's Free tier limits, both the API and the background worker are packaged and executed concurrently inside a single container using a startup script (`start.sh`).
 
-#### 1. PostgreSQL Database (Render)
-* Create a **Render PostgreSQL** database.
-* Copy the connection string.
+#### 1. Supabase Database (Supabase)
+* Provision a project on Supabase.
+* Copy the standard transaction PostgreSQL connection string (port 5432 or 6543 pooled).
 
 #### 2. Redis Cache (Upstash)
 * Create a serverless Redis database on Upstash (free tier).
@@ -74,11 +74,10 @@ To operate within Render's Free tier limits, both the API and the background wor
 * **Dockerfile Path**: `apps/api/Dockerfile`
 * **Required Environment Variables**:
   * `ENVIRONMENT`: `production`
-  * `DATABASE_URL`: Connection string of your Render Postgres database (e.g. `postgresql://...`).
+  * `DATABASE_URL`: Connection string of your Supabase Postgres database (e.g. `postgresql://...`).
   * `REDIS_URL`: Connection string of your Upstash Redis database (e.g. `redis://...`).
   * `SECRETS_PROVIDER`: `redis` (dynamic token caching).
-  * `AUTH0_DOMAIN`: Auth0 domain.
-  * `AUTH0_AUDIENCE`: Auth0 Client Audience ID.
+  * `SUPABASE_JWT_SECRET`: Supabase JWT secret (for HS256 JWT validation).
   * `GEMINI_API_KEY`: Google Gemini Developer API key.
   * `CORS_ALLOWED_ORIGINS`: Comma-separated list of allowed origins (e.g. `http://localhost:3000, https://cost-intelligence-web.vercel.app`).
 
@@ -89,7 +88,7 @@ To operate within Render's Free tier limits, both the API and the background wor
 To deploy the stack correctly without circular dependencies, follow this step-by-step sequence:
 
 ### Step 1: Deploy the Backend on Render
-1. Set up your **PostgreSQL** database on Render and **Redis** database on Upstash.
+1. Set up your **Supabase Project** database and **Redis** database on Upstash.
 2. Deploy the FastAPI **Web Service** using the Dockerfile (Render will run `start.sh` automatically to apply migrations and spin up both the API and the Celery worker processes).
 3. Configure the required environment variables.
 4. Configure CORS to accept temporary origins:
@@ -100,27 +99,27 @@ To deploy the stack correctly without circular dependencies, follow this step-by
 1. Set up a Next.js project on Vercel importing your monorepo.
 2. In the project settings, configure the environment variables:
    * Set `NEXT_PUBLIC_API_BASE` to your deployed Render API URL: `https://cost-intelligence-api.onrender.com/api/v1`.
-   * Complete the Auth0 parameters.
+   * Complete the Supabase parameters (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
 3. Deploy the frontend. Once active, copy the production frontend domain (e.g., `https://cost-intelligence-web.vercel.app`).
 
 ### Step 3: Lockdown & Finalize Security
 1. Return to your **Render** dashboard for the FastAPI backend.
 2. Update the `CORS_ALLOWED_ORIGINS` environment variable to lock it down exclusively to your production Vercel frontend domain:
    * **Set `CORS_ALLOWED_ORIGINS` to**: `http://localhost:3000, https://cost-intelligence-web.vercel.app` (removing the general wildcard).
-3. In your **Auth0 Application Dashboard**, add your Vercel production domain to the **Allowed Callback URLs**, **Allowed Logout URLs**, and **Allowed Origins (CORS)** lists.
+3. In your **Supabase Dashboard** under **Authentication > URL Configuration**, add your Vercel production domain to the **Redirect URLs** list.
 
 ---
 
 ## 4. Cost Breakdown
 
-Below is a detailed cost estimation for running the platform in a standard production environment:
+Below is the actual cost for running the platform — **all services use free tiers**:
 
-| Service Provider | Component | Tier / Size | Estimated Monthly Cost | Notes |
+| Service Provider | Component | Tier / Size | Monthly Cost | Notes |
 | :--- | :--- | :--- | :--- | :--- |
-| **Vercel** | Frontend App | Pro Plan | **$20.00** | Includes team collaboration, preview deployments, and global CDN. |
-| **Render** | API & Celery Worker | Starter Web Service (512MB RAM, 0.5 CPU) | **$7.00** | Runs FastAPI and Celery concurrently inside the same container. |
-| **Render** | PostgreSQL | Starter DB (1GB RAM, 0.25 CPU, 20GB SSD) | **$7.00** | Managed Postgres database with `pgvector` enabled. |
-| **Upstash** | Redis Cache | Serverless Free Tier | **$0.00** | Fully managed Redis queue broker and transient token cache. |
-| **Auth0** | Identity Provider | B2C Essentials | **$23.00** | Paid tier required for custom domain SSL and compliance. |
-| **Google** | Gemini API | Pay-as-you-go | **$15.00** | Estimate based on processing ~200 contracts/month. |
-| **Total** | | | **$72.00 / month** | **Highly optimized cost baseline for production.** |
+| **Vercel** | Frontend App | Hobby (Free) | **$0.00** | 100GB bandwidth, serverless functions, Edge CDN. |
+| **Render** | API Backend | Free Tier | **$0.00** | 750 hrs/mo; spins down after 15min inactivity (~30s cold start). |
+| **Supabase** | DB & Auth | Free Tier | **$0.00** | 500MB PostgreSQL (pgvector) + GoTrue Auth (50k MAUs). |
+| **Upstash** | Redis Cache | Serverless Free Tier | **$0.00** | 10K commands/day; transient cache & queue broker. |
+| **Google** | Gemini API | Free Tier | **$0.00** | 15 RPM (Pro) / 30 RPM (Flash); generous free quota. |
+| **Total** | | | **$0.00 / month** | **100% free tier — no paid plans active.** |
+
